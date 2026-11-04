@@ -88,10 +88,38 @@ button:focus-visible,a:focus-visible,input:focus-visible,.tag:focus-visible{outl
 .err{font-size:12px;color:var(--stop);font-weight:700}
 .banner{margin:12px 16px 0;padding:8px 12px;border-radius:10px;background:#FFF1DC;font-size:12.5px;line-height:1.4}
 
-#feed{position:fixed;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 16px);width:min(400px,calc(100vw - 420px));padding:10px 14px;z-index:4;display:flex;flex-direction:column;gap:6px}
-#feed ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;max-height:110px;overflow-y:auto}
-#feed li{font-size:12.5px;line-height:1.35;display:flex;gap:8px}
-#feed time{font-family:var(--mono);font-size:11px;color:var(--muted);flex:none;padding-top:1px;font-variant-numeric:tabular-nums}
+#dock{position:fixed;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 16px);width:min(400px,calc(100vw - 420px));height:min(360px,46vh);z-index:4;display:flex;flex-direction:column;overflow:hidden}
+#dock.min{height:auto}
+#dock.min .dock-body{display:none!important}
+.dock-head{display:flex;align-items:center;gap:4px;padding:8px 10px;border-bottom:1px solid var(--line);flex:none}
+.tab{border:0;background:none;padding:5px 10px;border-radius:8px;font-weight:900;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.tab[aria-selected="true"]{background:var(--card-2);color:var(--ink)}
+.badge{display:inline-grid;place-items:center;min-width:17px;height:17px;padding:0 5px;border-radius:999px;background:var(--stop);color:#fff;font-size:10px;letter-spacing:0;margin-left:6px;vertical-align:1px}
+.dock-head .sp{flex:1}
+.iconbtn{border:0;background:var(--card-2);border-radius:8px;min-width:28px;height:28px;font-weight:900;color:var(--muted)}
+.dock-body{flex:1;min-height:0;display:flex;flex-direction:column}
+.threads{display:flex;gap:6px;padding:8px 10px;overflow-x:auto;border-bottom:1px solid var(--line);flex:none}
+.thread{flex:none;display:flex;align-items:center;gap:6px;border:0;border-radius:999px;padding:4px 10px 4px 4px;background:var(--card-2);font-weight:800;font-size:12px;white-space:nowrap;max-width:160px}
+.thread span.nm{overflow:hidden;text-overflow:ellipsis}
+.thread.gen{padding-left:10px}
+.thread img{width:20px;height:20px;border-radius:50%;flex:none}
+.thread[aria-selected="true"]{background:var(--ink);color:#fff}
+.thread .udot{width:7px;height:7px;border-radius:50%;background:var(--stop);flex:none}
+#msgs{list-style:none;margin:0;padding:10px;flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
+.msg{display:flex;gap:8px;min-width:0}
+.msg img{width:26px;height:26px;border-radius:50%;flex:none;cursor:pointer}
+.msg .bd{min-width:0;display:flex;flex-direction:column;gap:1px}
+.msg .mh{font-size:12px;font-weight:800}
+.msg .mh time{font-weight:600;color:var(--muted);margin-left:6px;font-variant-numeric:tabular-nums}
+.msg .tx{font-size:13.5px;line-height:1.4;overflow-wrap:anywhere;white-space:pre-wrap}
+.msg.mine .mh{color:var(--accent)}
+#chatForm{display:flex;gap:6px;padding:8px 10px;border-top:1px solid var(--line);flex:none}
+#chatInput{flex:1;min-width:0;padding:9px 10px;border:1.5px solid var(--line);border-radius:10px;background:var(--card)}
+#chatForm button{border:0;border-radius:10px;background:var(--ink);color:#fff;font-weight:900;padding:0 14px}
+#feedPane{overflow-y:auto;padding:8px 14px}
+#feedPane ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+#feedPane li{font-size:12.5px;line-height:1.35;display:flex;gap:8px}
+#feedPane time{font-family:var(--mono);font-size:11px;color:var(--muted);flex:none;padding-top:1px;font-variant-numeric:tabular-nums}
 
 /* zone pills on the floor */
 .tag{position:fixed;left:0;top:0;padding:6px 12px;border:0;border-radius:999px;background:var(--card);font-weight:900;font-size:12px;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;display:flex;align-items:center;gap:8px;box-shadow:0 1px 2px rgba(43,38,34,.12),0 3px 10px rgba(43,38,34,.12);z-index:3;will-change:transform}
@@ -100,7 +128,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,.tag:focus-visible{outl
 .tag.zone{cursor:default}
 .tag.sel{background:var(--ink);color:#fff}
 .tag.sel .n{color:#fff;opacity:.7}
-.ptag{position:fixed;left:0;top:0;padding:2px 8px;border-radius:8px;background:rgba(255,255,255,.95);color:var(--ink);font-weight:800;font-size:11px;white-space:nowrap;z-index:2;pointer-events:none;max-width:130px;overflow:hidden;text-overflow:ellipsis;box-shadow:0 2px 6px rgba(43,38,34,.18);will-change:transform}
+.ptag{position:fixed;left:0;top:0;padding:2px 8px;border:0;border-radius:8px;background:rgba(255,255,255,.95);color:var(--ink);font-family:var(--body);font-weight:800;font-size:11px;white-space:nowrap;z-index:2;pointer-events:auto;cursor:pointer;max-width:130px;overflow:hidden;text-overflow:ellipsis;box-shadow:0 2px 6px rgba(43,38,34,.18);will-change:transform}
 .ptag.wait{background:var(--wait);color:#fff}
 .ptag.me{background:var(--accent);color:#fff}
 #toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 20px);transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:12px;font-weight:700;z-index:9;max-width:calc(100vw - 32px)}
@@ -114,7 +142,6 @@ button:focus-visible,a:focus-visible,input:focus-visible,.tag:focus-visible{outl
 #pad{position:fixed;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 80px);display:grid;grid-template-columns:repeat(3,54px);grid-template-rows:repeat(2,54px);gap:6px;z-index:6;touch-action:none}
 #pad button{border:0;border-radius:12px;background:rgba(255,255,255,.92);font-weight:900;font-size:16px;box-shadow:0 2px 8px rgba(43,38,34,.2);touch-action:none;user-select:none}
 #pad .kn{background:var(--wait);color:#fff;font-size:12px}
-body.fp #feed{display:none}
 body.fp #toast{bottom:auto;top:calc(env(safe-area-inset-top,0px) + 16px)}
 body.fp .ptag{font-size:12px}
 @media (max-width:760px){
@@ -122,12 +149,35 @@ body.fp .ptag{font-size:12px}
   #brand .sub{display:none}
   .chip{padding:6px 10px;font-size:10.5px}
   #panel{top:auto;left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));width:auto;max-height:46vh;bottom:calc(env(safe-area-inset-bottom,0px) + 12px)}
-  #feed{display:none}
+  #dock{display:none}
+  body.chat #dock{display:flex;left:12px;right:12px;width:auto;height:58vh;bottom:calc(env(safe-area-inset-bottom,0px) + 12px)}
+  body.chat #panel{display:none}
+  #chatBtn{display:flex}
   .tag{font-size:10px;padding:4px 9px}
   .ptag{font-size:10px}
 }
 @media (prefers-reduced-motion:reduce){.live.on i{animation:none}}
 [hidden]{display:none!important}
+.hudrow{display:flex;gap:8px;flex-wrap:wrap}
+#chatBtn{display:none}
+#pcard{position:fixed;z-index:12;width:270px;padding:16px;display:flex;flex-direction:column;gap:12px}
+#pcard .ph{display:flex;align-items:center;gap:10px;padding-right:20px}
+#pcard .ph img{width:42px;height:42px;border-radius:50%;flex:none}
+#pcard .ph b{display:block;font-size:15px;line-height:1.2}
+#pcard .ph span{font-size:12px;color:var(--muted);line-height:1.35}
+#pcard .x{position:absolute;top:8px;right:10px;border:0;background:none;font-size:20px;line-height:1;color:var(--muted);padding:4px}
+.pact{display:flex;flex-direction:column;gap:6px}
+.pact>button{display:flex;align-items:center;gap:10px;border:0;border-radius:10px;padding:10px 12px;background:var(--card-2);font-weight:800;font-size:13px;text-align:left}
+.pact>button.pri{background:var(--go);color:#fff}
+.pact>button:disabled{opacity:.5;cursor:default}
+.pact .ic{width:18px;text-align:center;flex:none}
+.roompick{display:flex;flex-wrap:wrap;gap:6px;padding:2px 0 4px}
+.roompick button{border:0;border-radius:999px;padding:6px 10px;background:#fff;box-shadow:inset 0 0 0 1.5px var(--line);font-weight:800;font-size:12px;display:flex;align-items:center;gap:6px}
+#invites{position:fixed;top:calc(env(safe-area-inset-top,0px) + 14px);left:50%;transform:translateX(-50%);z-index:11;display:flex;flex-direction:column;gap:8px;width:min(380px,calc(100vw - 32px));pointer-events:none}
+.invite{padding:12px 14px;display:flex;align-items:center;gap:10px;pointer-events:auto}
+.invite img{width:34px;height:34px;border-radius:50%;flex:none}
+.invite .t{flex:1;min-width:0;font-size:13px;line-height:1.35}
+.invite .bt{display:flex;flex-direction:column;gap:6px;flex:none}
 body{margin:0}
 #gate{position:fixed;inset:0;z-index:20;display:grid;place-items:center;background:rgba(217,220,225,.72);backdrop-filter:blur(6px);padding:16px}
 #gate .card{width:min(400px,100%);padding:24px;display:flex;flex-direction:column;gap:12px;text-align:center}
@@ -149,7 +199,10 @@ body{margin:0}
     <div id="meRow"><span class="hint">Connecting…</span></div>
   </div>
   <div id="switcher" role="toolbar" aria-label="Rooms"></div>
-  <button class="walkbtn" id="walk">Walk around <kbd>V</kbd></button>
+  <div class="hudrow">
+    <button class="walkbtn" id="walk">Walk around <kbd>V</kbd></button>
+    <button class="walkbtn" id="chatBtn">Chat <span class="badge" id="chatBtnBadge" hidden></span></button>
+  </div>
 </div>
 <div id="hint" hidden></div>
 <div id="cross" hidden></div>
@@ -160,10 +213,22 @@ body{margin:0}
 
 <aside id="panel" class="card" aria-live="polite"></aside>
 
-<section id="feed" class="card" aria-label="Activity">
-  <span class="label">Activity</span>
-  <ol id="feedList"></ol>
+<section id="dock" class="card" aria-label="Chat and activity">
+  <div class="dock-head" role="tablist">
+    <button class="tab" id="tabChat" role="tab" aria-selected="true">Chat<span class="badge" id="chatBadge" hidden></span></button>
+    <button class="tab" id="tabFeed" role="tab" aria-selected="false">Activity</button>
+    <span class="sp"></span>
+    <button class="iconbtn" id="dockMin" aria-label="Minimize chat">–</button>
+  </div>
+  <div class="dock-body" id="chatPane">
+    <div class="threads" id="threads"></div>
+    <ol id="msgs" aria-live="polite"></ol>
+    <form id="chatForm" autocomplete="off"><input id="chatInput" maxlength="1000" placeholder="Message everyone" aria-label="Message"><button type="submit">Send</button></form>
+  </div>
+  <div class="dock-body" id="feedPane" hidden><ol id="feedList"></ol></div>
 </section>
+<div id="invites" aria-live="polite"></div>
+<div id="pcard" class="card" hidden role="dialog" aria-label="Person"></div>
 <div id="toast" hidden></div>
 <div id="gate" hidden>
   <div class="card">
@@ -179,7 +244,7 @@ body{margin:0}
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-import { getDatabase, ref, onValue, get, set, update, remove, onDisconnect, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+import { getDatabase, ref, onValue, get, set, update, remove, onDisconnect, serverTimestamp, push, query, limitToLast } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
 import { FIREBASE_CONFIG } from './firebase-config.js';
 
 (() => {
@@ -478,7 +543,9 @@ function syncScene(ps){
     let p = people.get(uid);
     if(!p){
       const g = person(uid, prof.color || '#8A94A6'); g.position.copy(SPAWN); scene.add(g);
-      const tag = document.createElement('div'); tag.className = 'ptag'; document.body.appendChild(tag);
+      g.userData.uid = uid;
+      const tag = document.createElement('button'); tag.className = 'ptag'; document.body.appendChild(tag);
+      tag.addEventListener('click', e=>{ e.stopPropagation(); openPerson(uid, e.clientX, e.clientY); });
       p = {g, tag, path:[], key:''}; people.set(uid,p);
     }
     p.walk = S.walkers.get(uid) || null;
@@ -554,7 +621,7 @@ async function render(){
   if(S.mode==='live') ps = liveProfiles(ids);
   if(tok !== renderToken) return;
   profilesCache = ps;
-  renderMe(ps); renderChips(); renderTags(); renderPanel(ps); syncScene(ps);
+  renderMe(ps); renderChips(); renderTags(); renderPanel(ps); syncScene(ps); renderPerson(); renderInvites(); renderThreads();
 }
 function renderMe(ps){
   const row = document.getElementById('meRow'); row.textContent = '';
@@ -586,7 +653,7 @@ function personRow(uid, ps, meta, actions){
 function renderPanel(ps){
   const panel = document.getElementById('panel'); const keep = panel.scrollTop;
   const ae = document.activeElement;
-  const typing = ae && ae.id && ae.id.startsWith('meet-') ? {id:ae.id, v:ae.value, s:ae.selectionStart} : null;
+  const typing = ae && ae.id && (ae.id.startsWith('meet-') || ae.id.startsWith('notes-')) ? {id:ae.id, v:ae.value, s:ae.selectionStart} : null;
   panel.textContent = '';
   if(S.selected==='vault'){ renderOverview(panel, ps); panel.scrollTop = keep; return; }
   queueMicrotask(()=>{ if(!typing) return; const el = document.getElementById(typing.id); if(el){ el.value = typing.v; el.focus(); try{ el.setSelectionRange(typing.s,typing.s); }catch(e){} } });
@@ -610,6 +677,7 @@ function renderPanel(ps){
   panel.append(h('div',{class:'sect'}, h('span',{class:'label'},`Waiting to join (${waiting.length})`),
     waiting.length ? wl : h('span',{class:'empty'},'No one is waiting.'),
     (S.me.host && waiting.length && !meetFor(id)) ? h('span',{class:'err'},'Add this room’s Meet link below before letting people in.') : null));
+  panel.append(notesBlock(id));
   if(S.me.host && S.mode==='live') panel.append(meetEditor(id));
   panel.append(h('div',{class:'sect'}, h('span',{class:'hint'},'The call opens in a Google Meet window docked to the right of your screen. Keep the office on the left. Closing the call window takes you out of the room. Meet’s own “ask to join” setting still applies.')));
   panel.scrollTop = keep;
@@ -624,7 +692,8 @@ function accessBlock(id){
     s.append(h('div',{class:'status ok'}, h('b',null,'You’re in this meeting'), 'Others in the office can see you here.'));
     s.append(h('div',{class:'row2'},
       link ? h('button',{class:'big go',onclick:()=>openMeet(link,id)}, meetWin && !meetWin.closed ? 'Show call' : 'Reopen call') : null,
-      h('button',{class:'big ghost',onclick:()=>act(()=>API.leave(S.me.id),'You left the meeting')},'Leave meeting')));
+      link ? h('button',{class:'big ghost',onclick:()=>shareScreen(id)},'Share screen') : null,
+      h('button',{class:'big ghost',onclick:()=>{ closeCall(); act(()=>API.leave(S.me.id),'You left the meeting'); }},'Leave meeting')));
     return s;
   }
   if(S.me.host){
@@ -652,6 +721,27 @@ function accessBlock(id){
   if(myReq && myReq.room!==id) s.append(h('span',{class:'hint'},`You’re waiting for ${ROOMS[myReq.room].name}. Asking here replaces that request.`));
   if(myOcc && myOcc.room!==id) s.append(h('span',{class:'hint'},`You’re in ${ROOMS[myOcc.room].name} right now.`));
   s.append(h('button',{class:'big',onclick:()=>act(()=>API.ask(id),'Request sent. A host will let you in.')},'Ask to join'));
+  return s;
+}
+const DOC_RE = /^https:\/\/(docs|drive)\.google\.com\/[^\s]+$/i;
+function notesBlock(id){
+  const n = (S.notes||{})[id];
+  const s = h('div',{class:'sect'}, h('span',{class:'label'},'Meeting notes'));
+  if(n && DOC_RE.test(n.url||'')){
+    const by = profileOf(n.by||'').name;
+    s.append(h('a',{class:'big ghost',href:n.url,target:'_blank',rel:'noopener'},'Open latest notes'),
+      h('span',{class:'hint'}, `Added ${new Date(n.at).toLocaleDateString([], {month:'short', day:'numeric'})} ${fmtTime(n.at)}${by ? ' by '+by : ''}`));
+  } else s.append(h('span',{class:'empty'},'No notes linked yet.'));
+  s.append(h('span',{class:'hint'},'For Gemini notes, whoever is running the call clicks “Take notes” (the pencil icon, top right of Meet). Google emails the notes doc to the organizer after the call.'));
+  if(S.me.host && S.mode==='live'){
+    const inp = h('input',{id:'notes-'+id, type:'url', placeholder:'Paste the Google Docs link', value:(n&&n.url)||'', 'aria-label':'Notes link'});
+    const err = h('span',{class:'err',hidden:true});
+    s.append(h('div',{class:'field'}, inp, h('button',{class:'mini',onclick:()=>{
+      const v = inp.value.trim();
+      if(v && !DOC_RE.test(v)){ err.textContent = 'Use a Google Docs or Drive link.'; err.hidden = false; return; }
+      err.hidden = true; act(()=>API.saveNotes(id, v), v ? 'Notes linked to the room' : 'Notes link removed');
+    }},'Save')), err);
+  }
   return s;
 }
 function meetEditor(id){
@@ -694,22 +784,25 @@ async function act(fn, okMsg){
     else toast('That didn’t go through. Try again in a moment.');
   }
 }
-async function enter(id){
+async function enter(id, keepPos){
+  // joining from the panel walks my character to a seat; walking in keeps me where I am
+  if(!keepPos && FP.free && !FP.on){ FP.free = false; const mine = people.get(S.me.id); if(mine){ mine.walk = null; mine.key = ''; } if(API) API.presence({walk:null}); try{ localStorage.removeItem('ihq-pos'); }catch(e){} }
   await act(()=>API.enter(id));
+  syncScene(profilesCache);
 }
 /* Meet opens in a window docked to the right side of the screen.
    Google doesn't allow Meet inside other websites, so a docked window is the closest fit. */
 let meetWin = null, meetRoom = null, meetWatch = null;
-function openMeet(url, id){
-  if(!/^https:\/\/meet\.google\.com\//.test(url||'')) { toast('This room’s Meet link looks wrong. Ask a host to fix it.'); return; }
+function openMeet(url, id, quiet){
+  if(!/^https:\/\/meet\.google\.com\//.test(url||'')) { toast('This room’s Meet link looks wrong. Ask a host to fix it.'); return null; }
   if(document.pointerLockElement && document.exitPointerLock) document.exitPointerLock();
-  if(meetWin && !meetWin.closed && meetRoom===id){ try{ meetWin.focus(); }catch(e){} return; }
+  if(meetWin && !meetWin.closed && meetRoom===id){ try{ meetWin.focus(); }catch(e){} return meetWin; }
   const sw = screen.availWidth || innerWidth, sh = screen.availHeight || innerHeight;
   const sl = (screen.availLeft ?? 0), st = (screen.availTop ?? 0);
   const w = Math.round(Math.min(960, Math.max(480, sw*0.42))), ht = Math.round(sh);
   const feats = `popup=yes,width=${w},height=${ht},left=${Math.round(sl + sw - w)},top=${Math.round(st)}`;
   const win = window.open(url, 'ideahub-meet', feats);
-  if(!win){ toast('Your browser blocked the call window. Allow pop-ups for this site, then try again.'); return; }
+  if(!win){ if(!quiet) toast('Your browser blocked the call window. Allow pop-ups for this site, then try again.'); return null; }
   meetWin = win; meetRoom = id;
   try{ win.focus(); }catch(e){}
   feed(`Opened the ${ROOMS[id].name} call beside the office.`);
@@ -723,6 +816,15 @@ function openMeet(url, id){
     }
   }, 1500);
   render();
+  return win;
+}
+function closeCall(){ try{ if(meetWin && !meetWin.closed) meetWin.close(); }catch(e){} meetWin = null; meetRoom = null; clearInterval(meetWatch); }
+function myLink(id){ return S.me.host ? meetFor(id) : (S.grant && S.grant.room===id && S.grant.decision==='approved' ? S.grant.meet : ''); }
+function shareScreen(id){
+  const link = myLink(id);
+  if(!(meetWin && !meetWin.closed && meetRoom===id)){ if(!link || !openMeet(link, id)) return; }
+  else { try{ meetWin.focus(); }catch(e){} }
+  toast('In the call window, click “Share screen” (the screen icon in the bottom bar) and pick what to show.');
 }
 async function approve(uid, id){
   const meet = meetFor(id); if(!meet) return;
@@ -750,7 +852,23 @@ function select(id, fly){
 }
 const ray = new THREE.Raycaster(), ptr = new THREE.Vector2(); let down = null;
 renderer.domElement.addEventListener('pointerdown', e=>{ down=[e.clientX,e.clientY]; });
-renderer.domElement.addEventListener('pointerup', e=>{ if(FP.on) return; if(!down||Math.hypot(e.clientX-down[0],e.clientY-down[1])>6) return; const id=hit(e); if(id) select(id,true); });
+let personClickAt = 0;
+renderer.domElement.addEventListener('pointerup', e=>{
+  if(!down||Math.hypot(e.clientX-down[0],e.clientY-down[1])>6) return;
+  if(document.pointerLockElement) return;
+  const who = hitPerson(e.clientX/innerWidth*2-1, -(e.clientY/innerHeight)*2+1);
+  if(who){ personClickAt = Date.now(); openPerson(who, e.clientX, e.clientY); return; }
+  closePerson();
+  if(FP.on) return;
+  const id=hit(e); if(id) select(id,true);
+});
+function hitPerson(nx, ny){
+  ptr.set(nx, ny); ray.setFromCamera(ptr, camera);
+  const groups = [...people.values()].filter(p=>p.g.visible).map(p=>p.g);
+  const x = ray.intersectObjects(groups, true)[0]; let o = x && x.object;
+  while(o && !o.userData.uid) o = o.parent;
+  return o ? o.userData.uid : null;
+}
 renderer.domElement.addEventListener('pointermove', e=>{ if(FP.on){ if(!document.pointerLockElement && e.buttons) look(e.movementX, e.movementY); renderer.domElement.style.cursor = 'crosshair'; return; } renderer.domElement.style.cursor = hit(e)?'pointer':'grab'; });
 function hit(e){
   ptr.set(e.clientX/innerWidth*2-1, -(e.clientY/innerHeight)*2+1); ray.setFromCamera(ptr,camera);
@@ -771,11 +889,12 @@ function frame(){
   const raw = clock.getDelta(), dt = Math.min(raw,.05), dtWalk = Math.min(raw,.25), T = clock.elapsedTime;
   if(tween){ tween.t = Math.min(1,tween.t+dt/1.1); const k = ease(tween.t);
     camera.position.lerpVectors(tween.c0,tween.c1,k); controls.target.lerpVectors(tween.t0,tween.t1,k); if(tween.t>=1) tween=null; }
-  if(FP.on) stepFP(dtWalk); else controls.update();
+  if(FP.on) stepFP(dtWalk); else { stepBird(dtWalk); controls.update(); }
   for(const id in DOORS){ const d = DOORS[id]; const open = canEnter(id) ? 1 : 0; d.t += (open-d.t)*Math.min(1,dt*6); d.m.position.x = d.cx - d.t*d.w*.95; d.m.material.opacity = .35 - d.t*.2; }
   for(const [uid,p] of people){
     const g = p.g, u = g.userData;
     if(uid===S.me.id && FP.on){ g.visible = false; p.tag.hidden = true; g.position.set(FP.x,0,FP.z); p.path = []; p.key = 'fp'; continue; }
+    if(uid===S.me.id && FP.free) p.walk = {x:FP.x, z:FP.z, r:FP.yaw+Math.PI};
     g.visible = true;
     if(p.walk){
       tmp.set(p.walk.x,0,p.walk.z).sub(g.position); const dist = tmp.length();
@@ -847,33 +966,108 @@ function stepFP(dt){
   }
   camera.position.set(FP.x, EYE + (f&&!REDUCED ? Math.abs(Math.sin(performance.now()/120))*.04 : 0), FP.z);
   camera.rotation.set(FP.pitch, FP.yaw, 0, 'YXZ');
-  // where am I?
-  let near = areaOf(FP.x, FP.z);
-  if(!near) for(const id of MEETING_IDS){ const o = doorPts(id).outside; if(Math.hypot(o.x-FP.x, o.z-FP.z) < 2.6){ near = id; break; } }
-  if(near !== FP.near){ FP.near = near; if(near && near !== S.selected) select(near, false); }
+  FP.free = true;
+  whereAmI();
   setHint(hintText());
-  // share my position with everyone in the office
+  shareMyPosition();
+}
+function whereAmI(){
+  const inside = areaOf(FP.x, FP.z);
+  let near = inside, atDoor = null;
+  for(const id of MEETING_IDS){ const o = doorPts(id).outside; const d = Math.hypot(o.x-FP.x, o.z-FP.z); if(!inside && d < 2.6 && !near) near = id; if(!inside && d < 2.0) atDoor = id; }
+  if(near !== FP.near){ FP.near = near; if(near && near !== S.selected) select(near, false); }
+  if(S.mode!=='live' || !API) { FP.inRoom = inside; return; }
+  const now = performance.now(), mine = S.occ[S.me.id];
+  // walked into a room
+  if(inside !== FP.inRoom){
+    const prev = FP.inRoom; FP.inRoom = inside;
+    if(inside && !(mine && mine.room===inside) && canEnter(inside)){
+      const link = myLink(inside);
+      if(!link){ toast(`${ROOMS[inside].name} has no Meet link yet.`); }
+      else if(openMeet(link, inside, true)){ enter(inside, true); toast(`Joined ${ROOMS[inside].name}. The call opened beside the office.`); FP.joinPrompt = null; }
+      else FP.joinPrompt = inside;   // browser wants a key press first
+    }
+    if(!inside) FP.joinPrompt = null;
+    if(inside && FP.leaving && FP.leaving.room===inside) FP.leaving = null;
+    if(prev && !inside && mine && mine.room===prev && FP.free) FP.leaving = {room:prev, at:now};
+  }
+  // walked out of my meeting: leave after a short grace period
+  if(FP.leaving){
+    const o = S.occ[S.me.id];
+    if(!o || o.room!==FP.leaving.room || inside===FP.leaving.room) FP.leaving = null;
+    else if(now - FP.leaving.at > 3000){ const nm = ROOMS[FP.leaving.room].name; FP.leaving = null; closeCall(); act(()=>API.leave(S.me.id), `You walked out of ${nm} and left the call.`); }
+  }
+  // standing at a closed door: knock for me
+  if(atDoor && !canEnter(atDoor) && S.me.canWrite && !S.readOnly){
+    const q = S.requests[S.me.id];
+    if(q && q.room===atDoor){ FP.doorAt = null; }
+    else if(!FP.doorAt || FP.doorAt.room!==atDoor) FP.doorAt = {room:atDoor, at:now, done:false};
+    else if(!FP.doorAt.done && now - FP.doorAt.at > 1200){ FP.doorAt.done = true; act(()=>API.ask(atDoor), `Knocked on ${ROOMS[atDoor].name}. A host will let you in.`); }
+  } else FP.doorAt = null;
+}
+function joinFromPrompt(){
+  const id = FP.joinPrompt; if(!id) return false;
+  const link = myLink(id); if(!link) return false;
+  if(openMeet(link, id)){ enter(id, true); FP.joinPrompt = null; }
+  return true;
+}
+function shareMyPosition(){
   const now = performance.now();
   if(API && now - FP.sent > 120 && (Math.abs(FP.x-FP.lx)>.05 || Math.abs(FP.z-FP.lz)>.05 || Math.abs(FP.yaw-FP.lr)>.05)){
     FP.sent = now; FP.lx = FP.x; FP.lz = FP.z; FP.lr = FP.yaw;
     API.presence({walk:{x:+FP.x.toFixed(2), z:+FP.z.toFixed(2), r:+(FP.yaw+Math.PI).toFixed(2)}});
+    try{ localStorage.setItem('ihq-pos', JSON.stringify({x:FP.x, z:FP.z, yaw:FP.yaw})); }catch(e){}
   }
+}
+/* bird's-eye walking: W is "up the screen", the camera follows my character */
+let birdHintUntil = 0;
+function stepBird(dt){
+  const mine = people.get(S.me.id);
+  let f = 0, s = 0;
+  if(KEYS.w || KEYS.arrowup) f += 1; if(KEYS.s || KEYS.arrowdown) f -= 1;
+  if(KEYS.d || KEYS.arrowright) s += 1; if(KEYS.a || KEYS.arrowleft) s -= 1;
+  const hintEl = document.getElementById('hint');
+  if(!f && !s){
+    if(FP.free && mine){ whereAmI(); if(FP.near || FP.leaving){ setHint(hintText()); hintEl.hidden = false; } else if(performance.now() > birdHintUntil) hintEl.hidden = true; }
+    else if(performance.now() > birdHintUntil) hintEl.hidden = true;
+    return;
+  }
+  if(!mine || S.mode!=='live'){ if(S.mode!=='live'){ setHint('Sign in to walk your character around'); hintEl.hidden = false; birdHintUntil = performance.now()+2000; } return; }
+  if(!FP.free){ FP.x = mine.g.position.x; FP.z = mine.g.position.z; FP.yaw = mine.g.rotation.y + Math.PI; FP.free = true; mine.path = []; }
+  tween = null;
+  const fwd = tmp.copy(controls.target).sub(camera.position); fwd.y = 0;
+  if(fwd.lengthSq() < 1e-6) fwd.set(0,0,-1); fwd.normalize();
+  const fx = fwd.x, fz = fwd.z, rx = -fz, rz = fx;
+  const n = Math.hypot(f,s), sp = 6*(KEYS.shift?1.8:1)*dt;
+  const dx = (fx*f + rx*s)/n*sp, dz = (fz*f + rz*s)/n*sp;
+  const x0 = FP.x, z0 = FP.z;
+  if(!blocked(FP.x+dx, FP.z)) FP.x += dx;
+  if(!blocked(FP.x, FP.z+dz)) FP.z += dz;
+  FP.yaw = Math.atan2(dx, dz) - Math.PI;
+  const mx = FP.x - x0, mz = FP.z - z0;
+  camera.position.x += mx; camera.position.z += mz; controls.target.x += mx; controls.target.z += mz;
+  whereAmI();
+  setHint(FP.near || FP.leaving ? hintText() : '<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> to walk · <kbd>Shift</kbd> to run · <kbd>V</kbd> first person');
+  hintEl.hidden = false; birdHintUntil = performance.now() + 2500;
+  shareMyPosition();
 }
 const KN = COARSE ? 'tap <b>Knock</b>' : 'press <kbd>E</kbd>';
 function hintText(){
+  if(FP.leaving) return `Leaving ${ROOMS[FP.leaving.room].name}… walk back in to stay in the call`;
+  if(FP.joinPrompt && areaOf(FP.x,FP.z)===FP.joinPrompt) return `Press <kbd>Enter</kbd> to join the ${ROOMS[FP.joinPrompt].name} call`;
   const id = FP.near;
   if(!id) return COARSE ? 'Use the arrows to move · drag to look around' : '<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> to move · click or drag to look · <kbd>Shift</kbd> to run · <kbd>V</kbd> bird’s-eye view';
   const r = ROOMS[id], inside = areaOf(FP.x,FP.z)===id, nm = r.name;
   if(S.mode!=='live') return inside ? `Inside ${nm} · sign in to join` : `${nm} · doors are open in the preview`;
   const o = S.occ[S.me.id];
-  if(o && o.room===id) return inside ? `You’re in the ${nm} meeting` : `${nm} · your meeting`;
+  if(o && o.room===id) return inside ? `You’re in the ${nm} meeting · walk out to leave` : `${nm} · your meeting`;
   if(canEnter(id)) return inside ? `Inside ${nm} · ${document.pointerLockElement?'press <kbd>Esc</kbd>, then ':''}click <b>Join meeting</b> in the panel (the call opens beside the office)` : `${nm} · the door is open, walk in`;
   if(S.readOnly || !S.me.canWrite) return `${nm} · your account can’t join yet`;
   const q = S.requests[S.me.id];
-  if(q && q.room===id) return `${nm} · waiting for a host to let you in…`;
+  if(q && q.room===id) return `${nm} · knocked, waiting for a host to let you in…`;
   const g = S.grant;
   if(g && g.room===id && g.decision==='declined') return `${nm} · a host declined, ${KN} to ask again`;
-  return `${nm} · ${KN} to ask to join`;
+  return `${nm} · stand at the door to knock, or ${KN}`;
 }
 function setHint(t){ if(t===FP.hint) return; FP.hint = t; const el = document.getElementById('hint'); el.innerHTML = t; }
 function knock(){
@@ -893,26 +1087,34 @@ function setFP(on){
   document.getElementById('pad').hidden = !on || !COARSE;
   for(const k in KEYS) KEYS[k] = false;
   if(on){
-    tween = null; controls.enabled = false;
+    tween = null; controls.enabled = false; closePerson();
     const mine = people.get(S.me.id);
-    if(mine && !blocked(mine.g.position.x, mine.g.position.z) && mine.g.position.x < 29.5){ FP.x = mine.g.position.x; FP.z = mine.g.position.z; FP.yaw = mine.g.rotation.y + Math.PI; }
+    if(FP.free){ /* keep where I left my character */ }
+    else if(mine && !blocked(mine.g.position.x, mine.g.position.z) && mine.g.position.x < 29.5){ FP.x = mine.g.position.x; FP.z = mine.g.position.z; FP.yaw = mine.g.rotation.y + Math.PI; }
     else { FP.x = 27; FP.z = -.5; FP.yaw = Math.PI/2; }
     FP.pitch = -.08; FP.hint = ''; FP.near = null;
     renderer.domElement.focus && renderer.domElement.focus();
   } else {
     if(document.pointerLockElement && document.exitPointerLock) document.exitPointerLock();
     controls.enabled = true;
-    const mine = people.get(S.me.id); if(mine){ mine.key = ''; }
-    if(API) API.presence({walk:null});
+    // my character stays exactly where I stopped walking
+    FP.free = true; FP.sent = 0; FP.lx = NaN; shareMyPosition();
     camera.up.set(0,1,0);
-    flyTo(HOME_CAM.clone(), HOME_TGT.clone());
+    const t = new THREE.Vector3(FP.x, 0, FP.z), off = HOME_CAM.clone().sub(HOME_TGT).multiplyScalar(.55);
+    flyTo(t.clone().add(off), t);
     syncScene(profilesCache);
   }
 }
 document.getElementById('walk').addEventListener('click', ()=>setFP(!FP.on));
 renderer.domElement.tabIndex = 0;
+renderer.domElement.addEventListener('mousedown', ()=>{
+  // while looking around with a captured mouse, clicking the person under the crosshair opens their card
+  if(!FP.on || document.pointerLockElement!==renderer.domElement) return;
+  const who = hitPerson(0,0);
+  if(who){ personClickAt = Date.now(); document.exitPointerLock(); openPerson(who, innerWidth/2, innerHeight/2); }
+});
 renderer.domElement.addEventListener('click', ()=>{
-  if(!FP.on || COARSE || document.pointerLockElement) return;
+  if(!FP.on || COARSE || document.pointerLockElement || Date.now()-personClickAt < 400) return;
   try{ const r = renderer.domElement.requestPointerLock(); if(r && r.catch) r.catch(()=>{}); }catch(e){}
 });
 document.addEventListener('mousemove', e=>{ if(FP.on && document.pointerLockElement===renderer.domElement) look(e.movementX, e.movementY); });
@@ -921,8 +1123,11 @@ const MOVE_KEYS = ['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright
 addEventListener('keydown', e=>{
   const t = e.target; if(t && (t.tagName==='INPUT' || t.tagName==='TEXTAREA' || t.isContentEditable)) return;
   const k = e.key.toLowerCase();
-  if(k==='v' && !e.metaKey && !e.ctrlKey){ setFP(!FP.on); return; }
-  if(!FP.on) return;
+  if(k==='escape'){ closePerson(); return; }
+  if(e.metaKey || e.ctrlKey || e.altKey) return;
+  if(k==='v'){ setFP(!FP.on); return; }
+  if(k==='enter' && (!t || t===document.body || t===renderer.domElement) && joinFromPrompt()){ e.preventDefault(); return; }
+  if(k==='enter' && !FP.on && (!t || t===document.body || t===renderer.domElement)){ const ci = document.getElementById('chatInput'); if(ci && !document.getElementById('dock').classList.contains('min')){ ci.focus(); e.preventDefault(); } return; }
   if(MOVE_KEYS.includes(k)){ KEYS[k] = true; e.preventDefault(); }
   if(k==='e' && !e.repeat) knock();
 });
@@ -933,6 +1138,184 @@ document.querySelectorAll('#pad button').forEach(b=>{
   b.addEventListener('pointerdown', e=>{ e.preventDefault(); if(k==='e') knock(); else KEYS[k] = true; });
   ['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev, ()=>{ if(k!=='e') KEYS[k] = false; }));
 });
+
+/* ---------------- person card ---------------- */
+const PC = {uid:null, x:0, y:0, pick:false};
+function profileOf(uid){
+  if(S.mode==='live') return liveProfiles([uid])[uid];
+  return profilesCache[uid] || {name:'Someone', avatarUrl:initials('?','#8A94A6'), color:'#8A94A6'};
+}
+function statusOf(uid){
+  const o = S.occ[uid], q = S.requests[uid];
+  if(o && ROOMS[o.room]) return `In ${ROOMS[o.room].name} since ${fmtTime(o.since)}`;
+  if(q && ROOMS[q.room]) return `Waiting to join ${ROOMS[q.room].name}`;
+  return S.online.has(uid) ? 'In the office, not in a meeting' : 'Not in the office right now';
+}
+function openPerson(uid, x, y){ PC.uid = uid; PC.x = x; PC.y = y; PC.pick = false; renderPerson(true); }
+function closePerson(){ if(!PC.uid) return; PC.uid = null; renderPerson(); }
+function renderPerson(fresh){
+  const el = document.getElementById('pcard');
+  if(!PC.uid){ el.hidden = true; return; }
+  const uid = PC.uid, p = profileOf(uid), me = uid===S.me.id, live = S.mode==='live';
+  el.textContent = '';
+  el.append(h('button',{class:'x','aria-label':'Close',onclick:closePerson},'×'),
+    h('div',{class:'ph'}, h('img',{src:p.avatarUrl,alt:''}), h('div',null, h('b',null,(p.name||'Someone') + (me?' (you)':'')), h('span',null,statusOf(uid)))));
+  if(me){ el.append(h('span',{class:'hint'}, FP.free ? 'Use W A S D to walk your character around.' : 'Press W A S D to walk your character around.')); place(); return; }
+  const acts = h('div',{class:'pact'});
+  const o = S.occ[uid], mine = S.occ[S.me.id];
+  if(o && ROOMS[o.room]){
+    const R = o.room, nm = ROOMS[R].name;
+    if(mine && mine.room===R) acts.append(h('button',{disabled:true}, h('span',{class:'ic'},'✓'), `You’re both in ${nm}`));
+    else acts.append(h('button',{class:'pri',onclick:()=>jumpTo(uid)}, h('span',{class:'ic'},'→'), canEnter(R) ? `Join them in ${nm}` : `Ask to join ${nm}`));
+  } else acts.append(h('button',{disabled:true}, h('span',{class:'ic'},'→'), 'Jump to meeting (not in one)'));
+  acts.append(h('button',{onclick:()=>{ PC.pick = !PC.pick; renderPerson(); }}, h('span',{class:'ic'},'+'), 'Invite to a meeting'));
+  if(PC.pick){
+    const pick = h('div',{class:'roompick'});
+    MEETING_IDS.forEach(id=>pick.append(h('button',{onclick:()=>inviteTo(uid,id), style: mine && mine.room===id ? 'box-shadow:inset 0 0 0 2px var(--ink)' : null},
+      h('span',{class:'dot',style:`background:${ROOMS[id].color}`}), ROOMS[id].name)));
+    acts.append(pick);
+  }
+  acts.append(h('button',{onclick:()=>{ closePerson(); openChat('dm:'+uid); }}, h('span',{class:'ic'},'✉'), 'Send a message'));
+  el.append(acts);
+  if(!live) el.append(h('span',{class:'hint'},'Sample person. Sign in to use these.'));
+  place();
+  function place(){
+    el.hidden = false;
+    if(!fresh && el.dataset.placed) return;
+    const w = el.offsetWidth || 270, ht = el.offsetHeight || 220;
+    el.style.left = Math.max(8, Math.min(innerWidth - w - 8, PC.x + 14)) + 'px';
+    el.style.top = Math.max(8, Math.min(innerHeight - ht - 8, PC.y - 30)) + 'px';
+    el.dataset.placed = '1';
+  }
+}
+function needLive(what){ if(S.mode==='live') return true; toast(`Sign in to ${what}.`); return false; }
+function jumpTo(uid){
+  const o = S.occ[uid]; if(!o || !ROOMS[o.room]) return;
+  const R = o.room;
+  closePerson();
+  if(FP.on){ const d = doorPts(R).outside; FP.x = d.x; FP.z = d.z; FP.yaw = ROOMS[R].inward < 0 ? 0 : Math.PI; FP.free = true; }
+  else select(R, true);
+  if(!needLive('join meetings')) return;
+  if(canEnter(R)){
+    const link = S.me.host ? meetFor(R) : (S.grant && S.grant.room===R && S.grant.meet);
+    if(!link){ toast(`${ROOMS[R].name} has no Meet link yet. Ask a host to add it.`); return; }
+    openMeet(link, R); enter(R);
+  } else {
+    if(S.readOnly || !S.me.canWrite){ toast('Your account can’t join yet. Ask an office admin.'); return; }
+    act(()=>API.ask(R), `Asked to join ${ROOMS[R].name}. A host will let you in.`);
+  }
+}
+function inviteTo(uid, room){
+  if(!needLive('invite people')) return;
+  const nm = profileOf(uid).name || 'them';
+  act(()=>API.invite(uid, room), `Invited ${nm} to ${ROOMS[room].name}.`);
+  PC.pick = false; closePerson();
+}
+
+/* ---------------- invites I received ---------------- */
+let INVITES = {};
+function renderInvites(){
+  const box = document.getElementById('invites'); box.textContent = '';
+  const now = Date.now();
+  Object.entries(INVITES).filter(([,v])=>v && ROOMS[v.room] && now - v.at < 2*3600e3).sort((a,b)=>b[1].at-a[1].at).slice(0,3).forEach(([from,v])=>{
+    const p = profileOf(from), R = v.room, nm = ROOMS[R].name;
+    const mine = S.occ[S.me.id]; if(mine && mine.room===R) { API && API.dismissInvite(from); return; }
+    const can = canEnter(R);
+    box.append(h('div',{class:'card invite'}, h('img',{src:p.avatarUrl,alt:''}),
+      h('div',{class:'t'}, h('b',null,p.name||'Someone'), ` invited you to ${nm}.`),
+      h('div',{class:'bt'},
+        h('button',{class:'mini yes',onclick:()=>{
+          API.dismissInvite(from);
+          if(can){ const link = S.me.host ? meetFor(R) : (S.grant && S.grant.room===R && S.grant.meet); if(link){ openMeet(link,R); enter(R); select(R,!FP.on); } else toast(`${nm} has no Meet link yet.`); }
+          else act(()=>API.ask(R), `Asked to join ${nm}. A host will let you in.`);
+        }}, can ? 'Join' : 'Ask to join'),
+        h('button',{class:'mini',onclick:()=>API.dismissInvite(from)},'Not now'))));
+  });
+}
+
+/* ---------------- chat ---------------- */
+const CHAT = {thread:'general', general:[], dm:{}, index:{}, dmUnsub:null, tab:'chat', stick:true};
+const readKey = t => 'ihq-read-' + (S.me.id||'x') + '-' + t;
+function lastRead(t){ try{ return +localStorage.getItem(readKey(t)) || 0; }catch(e){ return 0; } }
+function markRead(t){ try{ localStorage.setItem(readKey(t), String(Date.now())); }catch(e){} }
+const dockEl = document.getElementById('dock');
+function chatVisible(){ return CHAT.tab==='chat' && !dockEl.classList.contains('min') && (innerWidth >= 760 || document.body.classList.contains('chat')); }
+function unreadGeneral(){ const r = lastRead('general'); return CHAT.general.filter(m=>m.at > r && m.from !== S.me.id).length; }
+function unreadDMs(){ return Object.entries(CHAT.index).filter(([o,v])=>v && v.from !== S.me.id && v.at > lastRead('dm:'+o)).map(([o])=>o); }
+function renderThreads(){
+  const box = document.getElementById('threads'); if(!box) return;
+  if(chatVisible()) markRead(CHAT.thread);
+  box.textContent = '';
+  const ug = unreadGeneral(), udm = unreadDMs();
+  box.append(h('button',{class:'thread gen','aria-selected':String(CHAT.thread==='general'),onclick:()=>openChat('general')}, h('span',{class:'nm'},'# General'), ug && CHAT.thread!=='general' ? h('span',{class:'udot'}) : null));
+  const others = Object.entries(CHAT.index).sort((a,b)=>(b[1].at||0)-(a[1].at||0)).map(([o])=>o);
+  if(CHAT.thread.startsWith('dm:') && !others.includes(CHAT.thread.slice(3))) others.unshift(CHAT.thread.slice(3));
+  others.slice(0,20).forEach(o=>{
+    const p = profileOf(o), t = 'dm:'+o;
+    box.append(h('button',{class:'thread','aria-selected':String(CHAT.thread===t),onclick:()=>openChat(t)}, h('img',{src:p.avatarUrl,alt:''}), h('span',{class:'nm'},p.name||'Someone'), udm.includes(o) && CHAT.thread!==t ? h('span',{class:'udot'}) : null));
+  });
+  const total = (CHAT.thread==='general' && chatVisible() ? 0 : ug) + udm.filter(o=>!(CHAT.thread==='dm:'+o && chatVisible())).length;
+  [document.getElementById('chatBadge'), document.getElementById('chatBtnBadge')].forEach(b=>{ b.hidden = !total; b.textContent = total > 99 ? '99+' : total; });
+  renderMsgs();
+}
+function renderMsgs(){
+  const list = document.getElementById('msgs'); if(!list) return;
+  const atBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 40;
+  const msgs = CHAT.thread==='general' ? CHAT.general : (CHAT.dm[CHAT.thread] || []);
+  list.textContent = '';
+  if(!msgs.length){
+    const other = CHAT.thread.startsWith('dm:') ? (profileOf(CHAT.thread.slice(3)).name || 'them') : null;
+    list.append(h('li',{class:'empty'}, other ? `No messages with ${other} yet.` : 'No messages yet. Say hello to the office.'));
+  }
+  msgs.forEach(m=>{
+    const p = profileOf(m.from), mine = m.from===S.me.id;
+    list.append(h('li',{class:'msg'+(mine?' mine':'')},
+      h('img',{src:p.avatarUrl,alt:'',onclick:e=>openPerson(m.from, e.clientX, e.clientY)}),
+      h('div',{class:'bd'}, h('span',{class:'mh'}, mine ? 'You' : (p.name||'Someone'), h('time',null,fmtTime(m.at))), h('span',{class:'tx'}, m.text))));
+  });
+  if(atBottom || CHAT.stick){ list.scrollTop = list.scrollHeight; CHAT.stick = false; }
+  const input = document.getElementById('chatInput');
+  input.placeholder = CHAT.thread==='general' ? 'Message everyone' : `Message ${profileOf(CHAT.thread.slice(3)).name || 'them'}`;
+}
+function openChat(t){
+  if(t.startsWith('dm:') && t.slice(3)===S.me.id) return;
+  CHAT.thread = t; CHAT.tab = 'chat'; CHAT.stick = true;
+  dockEl.classList.remove('min'); document.body.classList.add('chat');
+  setTab('chat');
+  if(S.mode==='live' && API) API.watchDM(t);
+  renderThreads();
+  setTimeout(()=>document.getElementById('chatInput').focus(), 0);
+}
+function setTab(tab){
+  CHAT.tab = tab;
+  document.getElementById('tabChat').setAttribute('aria-selected', String(tab==='chat'));
+  document.getElementById('tabFeed').setAttribute('aria-selected', String(tab==='feed'));
+  document.getElementById('chatPane').hidden = tab!=='chat';
+  document.getElementById('feedPane').hidden = tab!=='feed';
+  renderThreads();
+}
+document.getElementById('tabChat').addEventListener('click', ()=>{ dockEl.classList.remove('min'); setTab('chat'); });
+document.getElementById('tabFeed').addEventListener('click', ()=>{ dockEl.classList.remove('min'); setTab('feed'); });
+document.getElementById('dockMin').addEventListener('click', ()=>{
+  const min = dockEl.classList.toggle('min');
+  document.getElementById('dockMin').textContent = min ? '+' : '–';
+  if(!min) CHAT.stick = true;
+  document.body.classList.remove('chat'); renderThreads();
+});
+document.getElementById('chatBtn').addEventListener('click', ()=>{
+  const on = document.body.classList.toggle('chat');
+  if(on){ dockEl.classList.remove('min'); setTab('chat'); CHAT.stick = true; renderThreads(); }
+});
+document.getElementById('chatForm').addEventListener('submit', e=>{
+  e.preventDefault();
+  const input = document.getElementById('chatInput'), text = input.value.trim().slice(0,1000);
+  if(!text) return;
+  if(!needLive('chat')) return;
+  if(S.readOnly || !S.me.canWrite){ toast('Your account can’t send messages yet.'); return; }
+  input.value = ''; CHAT.stick = true;
+  API.chat(CHAT.thread, text).catch(err=>{ input.value = text; toast(/permission/i.test(String(err&&err.message)) ? 'You don’t have permission to send that.' : 'Message didn’t send. Try again.'); });
+});
+document.getElementById('chatInput').addEventListener('keydown', e=>{ if(e.key==='Escape') e.target.blur(); });
 
 /* ---------------- preview data (only without live data) ---------------- */
 function initials(ch,color){
@@ -949,6 +1332,8 @@ function startPreview(){
   S.occ = {p1:{room:'viktor',since:now-22*m}, p2:{room:'viktor',since:now-9*m}, p3:{room:'creative',since:now-30*m}, p5:{room:'lobby',since:now-4*m}, p9:{room:'creative',since:now-6*m}, p7:{room:'room3',since:now-12*m}};
   S.requests = {p4:{room:'viktor',at:now-1*m}};
   S.online = new Set(['p1','p2','p3','p4','p5','p6','p7','p8','p9']);
+  CHAT.general = [{from:'p2',text:'Morning! Room 2 standup in 5.',at:now-14*m},{from:'p3',text:'Design review moved to Room 1 today.',at:now-9*m},{from:'p7',text:'I’m in Room 3 if anyone needs me.',at:now-3*m}];
+  CHAT.index = {}; CHAT.dm = {}; CHAT.thread = 'general'; INVITES = {};
   feed('Preview: sample people are shown until you sign in.');
   render();
 }
@@ -1023,14 +1408,54 @@ async function boot(){
       leave: who => remove(ref(rdb,'occupancy/'+who)),
       decide: (who, grant) => update(ref(rdb), {['grants/'+who]:grant, ['requests/'+who]:null}),
       saveConfig: next => set(ref(rdb,'config/rooms'), next),
+      saveNotes: (room, url) => url ? set(ref(rdb,'notes/'+room), {url, at:Date.now(), by:uid}) : remove(ref(rdb,'notes/'+room)),
       presence: patch => { presenceState = {...presenceState, ...patch}; update(pref, patch).catch(()=>{}); },
+      invite: (to, room) => {
+        const paths = {['invites/'+to+'/'+uid]:{room, at:Date.now()}};
+        // a host's invite also lets the person straight in
+        if(admin && meetFor(room)) paths['grants/'+to] = {room, meet:meetFor(room), decision:'approved', at:Date.now(), by:uid};
+        return update(ref(rdb), paths);
+      },
+      dismissInvite: from => { delete INVITES[from]; renderInvites(); return remove(ref(rdb,'invites/'+uid+'/'+from)).catch(()=>{}); },
+      chat: (thread, text) => {
+        const msg = {from:uid, text, at:Date.now()};
+        if(thread==='general') return set(push(ref(rdb,'chat/general')), msg);
+        const other = thread.slice(3), tid = [uid, other].sort().join('_');
+        const key = push(ref(rdb,'dm/'+tid)).key, last = {at:msg.at, from:uid, text:text.slice(0,80)};
+        return update(ref(rdb), {['dm/'+tid+'/'+key]:msg, ['dmIndex/'+uid+'/'+other]:last, ['dmIndex/'+other+'/'+uid]:last});
+      },
+      watchDM: thread => {
+        if(dmUnsub){ dmUnsub(); dmUnsub = null; }
+        if(!thread.startsWith('dm:')) return;
+        const other = thread.slice(3), tid = [uid, other].sort().join('_');
+        dmUnsub = onValue(query(ref(rdb,'dm/'+tid), limitToLast(100)), s=>{
+          const arr = []; s.forEach(c=>{ const v = c.val(); if(v && typeof v.text==='string') arr.push(v); });
+          CHAT.dm[thread] = arr; renderThreads();
+        }, ()=>{});
+      },
     };
+    let dmUnsub = null;
+    unsubs.push(()=>{ if(dmUnsub) dmUnsub(); });
+    CHAT.general = []; CHAT.dm = {}; CHAT.index = {}; CHAT.thread = 'general'; INVITES = {};
+    try{ const sp = JSON.parse(localStorage.getItem('ihq-pos')||'null'); if(sp && isFinite(sp.x) && isFinite(sp.z) && !blocked(sp.x, sp.z)){ FP.x = sp.x; FP.z = sp.z; FP.yaw = sp.yaw||0; FP.free = true; presenceState.walk = {x:+sp.x.toFixed(2), z:+sp.z.toFixed(2), r:+((sp.yaw||0)+Math.PI).toFixed(2)}; } }catch(e){}
     unsubs.push(onValue(ref(rdb,'.info/connected'), s=>{
       if(s.val()!==true) return;
       onDisconnect(pref).remove().then(()=>set(pref, {...presenceState, walk:presenceState.walk||null, at:serverTimestamp()})).catch(()=>{});
     }));
 
     feed('You walked into the office.');
+    let firstGen = true, prevIndex = {};
+    unsubs.push(onValue(query(ref(rdb,'chat/general'), limitToLast(100)), s=>{
+      const arr = []; s.forEach(c=>{ const v = c.val(); if(v && typeof v.text==='string') arr.push(v); });
+      if(!firstGen){ const last = arr[arr.length-1]; if(last && last.from!==uid && !(CHAT.thread==='general' && chatVisible())) feed(`${(S.profiles[last.from]||{}).name||'Someone'} posted in General.`); }
+      firstGen = false; CHAT.general = arr; renderThreads();
+    }, ()=>{}));
+    unsubs.push(onValue(ref(rdb,'dmIndex/'+uid), s=>{
+      const idx = s.val() || {};
+      Object.entries(idx).forEach(([o,v])=>{ const pv = prevIndex[o]; if(v && v.from!==uid && (!pv || pv.at!==v.at) && Object.keys(prevIndex).length+1 && !(CHAT.thread==='dm:'+o && chatVisible()) && Date.now()-v.at < 60000) toast(`${(S.profiles[o]||{}).name||'Someone'}: ${v.text}`); });
+      prevIndex = idx; CHAT.index = idx; renderThreads();
+    }, ()=>{}));
+    unsubs.push(onValue(ref(rdb,'invites/'+uid), s=>{ INVITES = s.val() || {}; renderInvites(); }, ()=>{}));
     const nameOf = id => (S.profiles[id] && S.profiles[id].name) || 'Someone';
     let firstReq = true, firstOcc = true;
 
@@ -1053,6 +1478,7 @@ async function boot(){
       }
       render();
     }, ()=>{}));
+    unsubs.push(onValue(ref(rdb,'notes'), s=>{ S.notes = s.val() || {}; render(); }, ()=>{}));
     if(admin) unsubs.push(onValue(ref(rdb,'config/rooms'), s=>{ S.config = s.val() || {}; render(); }, ()=>{}));
     unsubs.push(onValue(ref(rdb,'presence'), s=>{
       const all = s.val() || {}, walkers = new Map();
