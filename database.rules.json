@@ -1,0 +1,60 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "allowed": {
+      "$email": {
+        ".read": "auth != null && auth.token.email.toLowerCase().replace('.', ',') === $email"
+      }
+    },
+    "admins": {
+      "$email": {
+        ".read": "auth != null && auth.token.email.toLowerCase().replace('.', ',') === $email"
+      }
+    },
+
+    "profiles": {
+      ".read": "auth != null && auth.token.email_verified == true && root.child('allowed').child(auth.token.email.toLowerCase().replace('.', ',')).val() === true",
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid && auth.token.email_verified == true && root.child('allowed').child(auth.token.email.toLowerCase().replace('.', ',')).val() === true",
+        ".validate": "newData.child('name').isString() && newData.child('name').val().length <= 80"
+      }
+    },
+
+    "presence": {
+      ".read": "auth != null && auth.token.email_verified == true && root.child('allowed').child(auth.token.email.toLowerCase().replace('.', ',')).val() === true",
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid && auth.token.email_verified == true && root.child('allowed').child(auth.token.email.toLowerCase().replace('.', ',')).val() === true"
+      }
+    },
+
+    "requests": {
+      ".read": "auth != null && auth.token.email_verified == true && root.child('allowed').child(auth.token.email.toLowerCase().replace('.', ',')).val() === true",
+      "$uid": {
+        ".write": "auth != null && auth.token.email_verified == true && root.child('allowed').child(auth.token.email.toLowerCase().replace('.', ',')).val() === true && (auth.uid === $uid || root.child('admins').child(auth.token.email.toLowerCase().replace('.', ',')).val() === true)",
+        ".validate": "!newData.exists() || (newData.child('room').val().matches(/^(creative|viktor|room3|lobby)$/) && newData.child('at').isNumber())"
+      }
+    },
+
+    "grants": {
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || root.child('admins').child(auth.token.email.toLowerCase().replace('.', ',')).val() === true)",
+        ".write": "auth != null && auth.token.email_verified == true && root.child('admins').child(auth.token.email.toLowerCase().replace('.', ',')).val() === true"
+      }
+    },
+
+    "occupancy": {
+      ".read": "auth != null && auth.token.email_verified == true && root.child('allowed').child(auth.token.email.toLowerCase().replace('.', ',')).val() === true",
+      "$uid": {
+        ".write": "auth != null && auth.token.email_verified == true && root.child('allowed').child(auth.token.email.toLowerCase().replace('.', ',')).val() === true && (root.child('admins').child(auth.token.email.toLowerCase().replace('.', ',')).val() === true || (auth.uid === $uid && (!newData.exists() || (root.child('grants').child($uid).child('decision').val() === 'approved' && root.child('grants').child($uid).child('room').val() === newData.child('room').val()))))",
+        ".validate": "!newData.exists() || (newData.child('room').val().matches(/^(creative|viktor|room3|lobby)$/) && newData.child('since').isNumber())"
+      }
+    },
+
+    "config": {
+      ".read": "auth != null && root.child('admins').child(auth.token.email.toLowerCase().replace('.', ',')).val() === true",
+      ".write": "auth != null && auth.token.email_verified == true && root.child('admins').child(auth.token.email.toLowerCase().replace('.', ',')).val() === true"
+    }
+  }
+}
