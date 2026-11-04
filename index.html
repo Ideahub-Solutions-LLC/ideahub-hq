@@ -611,7 +611,7 @@ function renderPanel(ps){
     waiting.length ? wl : h('span',{class:'empty'},'No one is waiting.'),
     (S.me.host && waiting.length && !meetFor(id)) ? h('span',{class:'err'},'Add this room’s Meet link below before letting people in.') : null));
   if(S.me.host && S.mode==='live') panel.append(meetEditor(id));
-  panel.append(h('div',{class:'sect'}, h('span',{class:'hint'},'Google Meet still applies its own host settings. If the meeting is set to “ask to join”, the person will also need to be admitted inside Meet.')));
+  panel.append(h('div',{class:'sect'}, h('span',{class:'hint'},'The call opens in a Google Meet window docked to the right of your screen. Keep the office on the left. Closing the call window takes you out of the room. Meet’s own “ask to join” setting still applies.')));
   panel.scrollTop = keep;
 }
 function accessBlock(id){
@@ -623,14 +623,14 @@ function accessBlock(id){
     const link = S.me.host ? meetFor(id) : (g && g.room===id && g.meet);
     s.append(h('div',{class:'status ok'}, h('b',null,'You’re in this meeting'), 'Others in the office can see you here.'));
     s.append(h('div',{class:'row2'},
-      link ? h('a',{class:'big go',href:link,target:'_blank',rel:'noopener'},'Reopen Meet') : null,
+      link ? h('button',{class:'big go',onclick:()=>openMeet(link,id)}, meetWin && !meetWin.closed ? 'Show call' : 'Reopen call') : null,
       h('button',{class:'big ghost',onclick:()=>act(()=>API.leave(S.me.id),'You left the meeting')},'Leave meeting')));
     return s;
   }
   if(S.me.host){
     const link = meetFor(id);
     if(!link){ s.append(h('span',{class:'hint'},'Add the Meet link below, then you can open the room.')); return s; }
-    s.append(h('a',{class:'big go',href:link,target:'_blank',rel:'noopener',onclick:()=>enter(id)},'Join meeting'),
+    s.append(h('button',{class:'big go',onclick:()=>{ openMeet(link,id); enter(id); }},'Join meeting'),
       h('span',{class:'hint'},'As a host you can go straight in.'+(myOcc?` This moves you out of ${ROOMS[myOcc.room].name}.`:'')));
     return s;
   }
@@ -640,7 +640,7 @@ function accessBlock(id){
   }
   if(g && g.room===id && g.decision==='approved'){
     s.append(h('div',{class:'status ok'}, h('b',null,'You’ve been let in'), 'Open the meeting. You’ll show up in this room for everyone.'));
-    s.append(h('a',{class:'big go',href:g.meet,target:'_blank',rel:'noopener',onclick:()=>enter(id)},'Join meeting'));
+    s.append(h('button',{class:'big go',onclick:()=>{ openMeet(g.meet,id); enter(id); }},'Join meeting'));
     return s;
   }
   if(myReq && myReq.room===id){
@@ -696,6 +696,33 @@ async function act(fn, okMsg){
 }
 async function enter(id){
   await act(()=>API.enter(id));
+}
+/* Meet opens in a window docked to the right side of the screen.
+   Google doesn't allow Meet inside other websites, so a docked window is the closest fit. */
+let meetWin = null, meetRoom = null, meetWatch = null;
+function openMeet(url, id){
+  if(!/^https:\/\/meet\.google\.com\//.test(url||'')) { toast('This room’s Meet link looks wrong. Ask a host to fix it.'); return; }
+  if(document.pointerLockElement && document.exitPointerLock) document.exitPointerLock();
+  if(meetWin && !meetWin.closed && meetRoom===id){ try{ meetWin.focus(); }catch(e){} return; }
+  const sw = screen.availWidth || innerWidth, sh = screen.availHeight || innerHeight;
+  const sl = (screen.availLeft ?? 0), st = (screen.availTop ?? 0);
+  const w = Math.round(Math.min(960, Math.max(480, sw*0.42))), ht = Math.round(sh);
+  const feats = `popup=yes,width=${w},height=${ht},left=${Math.round(sl + sw - w)},top=${Math.round(st)}`;
+  const win = window.open(url, 'ideahub-meet', feats);
+  if(!win){ toast('Your browser blocked the call window. Allow pop-ups for this site, then try again.'); return; }
+  meetWin = win; meetRoom = id;
+  try{ win.focus(); }catch(e){}
+  feed(`Opened the ${ROOMS[id].name} call beside the office.`);
+  clearInterval(meetWatch);
+  meetWatch = setInterval(()=>{
+    if(meetWin && meetWin.closed){
+      clearInterval(meetWatch); meetWin = null;
+      const o = S.occ[S.me.id];
+      if(API && o && o.room===meetRoom){ act(()=>API.leave(S.me.id), `You left ${ROOMS[meetRoom].name} (call window closed)`); }
+      meetRoom = null; render();
+    }
+  }, 1500);
+  render();
 }
 async function approve(uid, id){
   const meet = meetFor(id); if(!meet) return;
@@ -840,7 +867,7 @@ function hintText(){
   if(S.mode!=='live') return inside ? `Inside ${nm} · sign in to join` : `${nm} · doors are open in the preview`;
   const o = S.occ[S.me.id];
   if(o && o.room===id) return inside ? `You’re in the ${nm} meeting` : `${nm} · your meeting`;
-  if(canEnter(id)) return inside ? `Inside ${nm} · ${document.pointerLockElement?'press <kbd>Esc</kbd>, then ':''}click <b>Join meeting</b> in the panel` : `${nm} · the door is open, walk in`;
+  if(canEnter(id)) return inside ? `Inside ${nm} · ${document.pointerLockElement?'press <kbd>Esc</kbd>, then ':''}click <b>Join meeting</b> in the panel (the call opens beside the office)` : `${nm} · the door is open, walk in`;
   if(S.readOnly || !S.me.canWrite) return `${nm} · your account can’t join yet`;
   const q = S.requests[S.me.id];
   if(q && q.room===id) return `${nm} · waiting for a host to let you in…`;
