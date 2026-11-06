@@ -4,14 +4,14 @@
 
 ```bash
 pnpm install            # Node >= 20.9, pnpm 10 (better-sqlite3 build is allow-listed in package.json)
-pnpm setup              # db:migrate + db:seed (fictional data)
+pnpm db:setup              # db:migrate + db:seed (fictional data)
 pnpm dev                # http://localhost:3000 (inline job worker starts automatically)
 pnpm typecheck          # tsc for app and tests
 pnpm lint               # eslint (flat config, eslint-config-next 16)
 pnpm test               # vitest, in-memory SQLite, no network — must stay green
 pnpm build && pnpm start
 pnpm db:generate --name <change>   # after editing src/db/schema.ts; commit drizzle/*.sql and drizzle/meta
-pnpm db:reset && pnpm setup        # fresh database
+pnpm db:reset && pnpm db:setup        # fresh database
 ```
 
 ## Rules

@@ -8,7 +8,7 @@ Verified in this environment: Node 22.23.4, pnpm 10.28.0, Next.js 16.4.5, React 
 
 | Check | Result |
 | --- | --- |
-| `pnpm install && pnpm setup && pnpm dev` | Runs; sign-in with seeded accounts works |
+| `pnpm install && pnpm db:setup && pnpm dev` | Runs; sign-in with seeded accounts works |
 | `pnpm typecheck` | Clean (app + tests) |
 | `pnpm lint` | Clean (ESLint 10, `eslint-config-next` flat config) |
 | `pnpm test` | **35 / 35 passing** in 5 files (see §5) |
@@ -112,4 +112,4 @@ git remote add origin git@github.com:<org>/ideahub-ai-team.git
 git push -u origin main
 ```
 
-Exporting code does **not** transfer: the local SQLite database (`data/` is git-ignored — re-run `pnpm setup`), `.env.local` secrets, or any provider/connector configuration. Each environment must run migrations (`pnpm db:migrate`) and configure env vars separately.
+Exporting code does **not** transfer: the local SQLite database (`data/` is git-ignored — re-run `pnpm db:setup`), `.env.local` secrets, or any provider/connector configuration. Each environment must run migrations (`pnpm db:migrate`) and configure env vars separately.

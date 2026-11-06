@@ -76,4 +76,4 @@ Commit the generated SQL and `drizzle/meta/*`. Never edit applied migrations; ad
 
 `pnpm db:seed` creates one fictional workspace (`IdeaHub HQ`): 5 fictional users, 6 departments, 7 AI employee profiles (only **Harper** active), 4 skills, 6 knowledge sources (approved / pending / stale examples), 2 memory proposals + 1 approved memory, 6 connectors (Demo / Disconnected / Planned), budgets, 7 human tasks, and then **runs the real pipeline**: a meeting-actions task (reviewed, with a pending follow-up proposal to the demo task system), a weekly-summary task (awaiting review), and one conversation with Harper. All names, clients and meetings are invented.
 
-To change the fictional accounts, edit `src/db/demo-users.ts` and `src/db/seed.ts`, then `pnpm db:reset && pnpm setup`.
+To change the fictional accounts, edit `src/db/demo-users.ts` and `src/db/seed.ts`, then `pnpm db:reset && pnpm db:setup`.

@@ -36,7 +36,7 @@ A digital headquarters where IdeaHub's human team and AI employees work together
 ```bash
 pnpm install
 cp .env.example .env.local        # fill SESSION_SECRET (openssl rand -hex 32); keys are optional
-pnpm setup                        # = db:migrate + db:seed (fictional sample workspace)
+pnpm db:setup                        # = db:migrate + db:seed (fictional sample workspace)
 pnpm dev                          # http://localhost:3000
 ```
 

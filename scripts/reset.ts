@@ -9,4 +9,4 @@ for (const suffix of ["", "-wal", "-shm", "-journal"]) {
     console.log(`removed ${p}`);
   }
 }
-console.log("Database reset. Run `pnpm db:migrate && pnpm db:seed` (or `pnpm setup`).");
+console.log("Database reset. Run `pnpm db:migrate && pnpm db:seed` (or `pnpm db:setup`).");
