@@ -28,7 +28,7 @@ A digital headquarters where IdeaHub's human team and AI employees work together
 ## Prerequisites
 
 - Node.js **20.9+** (22 LTS recommended) and **pnpm 10** (`corepack enable` or `npm i -g pnpm`)
-- A C/C++ toolchain is only needed if `better-sqlite3` has no prebuilt binary for your platform (it does for macOS/Linux/Windows on Node 20/22)
+- No compiler needed: `better-sqlite3` v13 ships prebuilt binaries for macOS, Linux and Windows (x64/arm64) inside the npm package
 - No external services are required. SQLite is used for local development.
 
 ## Install and run locally
