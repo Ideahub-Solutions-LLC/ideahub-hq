@@ -14,6 +14,8 @@ A digital headquarters where IdeaHub's human team and AI employees work together
 | Workspace scoping | **Real** — every record carries `workspace_id`; membership is verified server-side on each request; covered by isolation tests |
 | Dashboard, 3D office + illustrated/list views, departments | **Real** |
 | Employee directory, profile, edit (identity / personality / skills / knowledge / authority / model) | **Real** — versioned, audited |
+| HQ readiness and employee configuration desks | **Real** — reviewed operating briefs, model access evidence, setup gaps and tool assignment status |
+| Provider configuration | **Real** — provider model catalog checks, per-employee OpenAI API mode and temperature compatibility controls; live generation still needs qualification |
 | Employee workspace (conversation, current task, outputs, approvals, workflow runner) | **Real** — replies use Claude/OpenAI when an API key is configured, otherwise a clearly labeled offline **Demo provider** |
 | Pilot workflow A: meeting record → draft action list | **Real, deterministic** — source-linked, flags missing / unverified owners and dates; optional model extraction is validated against the source |
 | Pilot workflow B: weekly status summary from task records | **Real, deterministic** — every line cites its record |
@@ -23,6 +25,7 @@ A digital headquarters where IdeaHub's human team and AI employees work together
 | Approval center — exact action, payload hash binding, idempotent execution, receipts, reconcile-before-retry | **Real** engine; **execution targets are Demo connectors** |
 | Skills (versioned), knowledge sources (reviewed), memory proposal queue | **Real** |
 | Integrations (Slack, Teams, Email, Zoom, CQL/GoHighLevel, task system) | **Simulated**: Demo / Disconnected / Planned. Nothing is ever delivered externally in this version |
+| MCP server registry | **Real** approved Streamable HTTP metadata discovery, tool schemas and reviewed per-employee assignments; **tool invocation is not enabled** |
 | Admin: members & roles, employee permissions, providers, usage ledger & budgets, audit log, emergency stop | **Real** (usage costs only when a pricing table is configured) |
 | Background jobs | **Real** durable DB-backed queue with a worker (inline in dev, or `pnpm worker`) |
 | Billing / checkout | **Not implemented** (design only: `docs/BILLING_DESIGN.md`) |
@@ -36,6 +39,8 @@ For department-specific employee development, reviewable skill packs and practic
 For the navigable 3D office, see [docs/THREE_DIMENSIONAL_OFFICE.md](docs/THREE_DIMENSIONAL_OFFICE.md). The retained illustrated character office and truthful activity/motion controls are covered in [docs/CHARACTER_OFFICE.md](docs/CHARACTER_OFFICE.md).
 
 For Juno's brief form, reviewer/source prerequisites, revisions and live office stages, see [docs/JUNO_CONTENT_WORKFLOW.md](docs/JUNO_CONTENT_WORKFLOW.md). Existing employee settings are preserved; **Office → Juno → Assign content brief** shows what must be prepared before running.
+
+For profiles, model access/routing and MCP connections, open **HQ readiness** or read [docs/HQ_CONFIGURATION.md](docs/HQ_CONFIGURATION.md). Configuration checks do not certify live model quality or production security.
 
 ## Prerequisites
 

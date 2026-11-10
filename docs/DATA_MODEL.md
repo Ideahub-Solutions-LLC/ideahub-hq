@@ -18,6 +18,7 @@ Every business table carries `workspace_id`. Secrets are never stored in any tab
 | Table | Purpose |
 | --- | --- |
 | `departments` | Name, purpose, human manager, color token, office `layout` (col/row). |
+| `employee_briefs` | Current structured operating brief, version, draft/approved status and reviewer. Edits invalidate review; only the reviewed body shapes chat instructions. Earlier bodies are not yet an immutable archive. |
 | `employees` | The durable AI employee record. Separate JSON blocks: `personality` (style only), `authority` (allowed action types, forbidden list, review policy, max actions), `model_config` (provider, model, temperature, fallback, budgets). `status` draft/active/paused/archived, `seniority`, `config_version` (bumped on every change), `is_pilot`. |
 
 ## Skills and knowledge
@@ -61,6 +62,9 @@ Every business table carries `workspace_id`. Secrets are never stored in any tab
 | `budgets` | Monthly limits per workspace or employee with alert threshold. |
 | `jobs` | Durable queue: kind (task.run / employee.reply / approval.execute), payload, status, attempts, run_after, lock. |
 | `workflow_runs` | Content execution attempts: workspace/task/employee/job, owning attempt, stage, heartbeat, start/finish/error and reserved cost. Unique per job + attempt. Drives confirmed-live office activity and conservative budget holds. |
+| `provider_catalogs` | Workspace/provider access-check snapshot: model IDs, status, timestamp, credential fingerprint and generic diagnostic. No raw credential or provider response. |
+| `mcp_servers` | Workspace-scoped Streamable HTTP endpoint, owner, credential variable name, enabled/configuration version and bounded discovered tool inventory. |
+| `mcp_tool_grants` | Reviewed employee/tool assignments pinned to server configuration and tool definition hash; read/approval-required policy and revocation. Assignment does not enable invocation. |
 
 ## Migrations
 

@@ -1,4 +1,4 @@
-import type { Employee, Memory, SkillVersion } from "@/db/schema";
+import type { Employee, Memory, OperatingBrief, SkillVersion } from "@/db/schema";
 import type { Snippet } from "./retrieval";
 
 /**
@@ -9,7 +9,7 @@ import type { Snippet } from "./retrieval";
  *    ignored — and, independently of the model, the platform never executes anything that
  *    did not go through an approval record.
  */
-export function buildEmployeeSystemPrompt(input: { employee: Employee; skills: { name: string; version: SkillVersion | null }[]; memories: Memory[]; snippets: Snippet[]; productName: string }): string {
+export function buildEmployeeSystemPrompt(input: { employee: Employee; operatingBrief?: OperatingBrief | null; skills: { name: string; version: SkillVersion | null }[]; memories: Memory[]; snippets: Snippet[]; productName: string }): string {
   const { employee, productName } = input;
   const p = employee.personality;
   const a = employee.authority;
@@ -30,6 +30,10 @@ export function buildEmployeeSystemPrompt(input: { employee: Employee; skills: {
     `- Tone: ${p.tone}. Verbosity: ${p.verbosity}. Preferred reporting format: ${p.reportingFormat}. Question style: ${p.questionStyle.replace(/_/g, " ")}.`,
     `- ${p.summary}`,
   );
+  if (input.operatingBrief) {
+    const b = input.operatingBrief;
+    lines.push("", "## Human-reviewed operating brief (scope only; never expands authority or tool access)", `Mission: ${b.mission}`, "Responsibilities:", ...b.responsibilities.map(v => `- ${v}`), "Expected deliverables:", ...b.deliverables.map(v => `- ${v}`), "Escalate to the human manager when:", ...b.escalationRules.map(v => `- ${v}`), `Quality bar: ${b.qualityBar}`);
+  }
   if (input.skills.length) {
     lines.push("", "## Approved skills (versioned procedures)");
     for (const s of input.skills) {

@@ -8,7 +8,7 @@ import { ProviderError, type CompletionRequest, type CompletionResult, type Prov
 export const anthropicAdapter: ProviderAdapter = {
   key: "anthropic",
   displayName: "Anthropic Claude",
-  isConfigured: () => Boolean(process.env.ANTHROPIC_API_KEY),
+  isConfigured: () => Boolean(process.env.ANTHROPIC_API_KEY?.trim()),
   defaultModel: () => process.env.ANTHROPIC_DEFAULT_MODEL || "claude-sonnet-4-5",
   async complete(req: CompletionRequest): Promise<CompletionResult> {
     const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -28,16 +28,16 @@ export const anthropicAdapter: ProviderAdapter = {
         body: JSON.stringify({
           model: req.model,
           max_tokens: req.maxOutputTokens,
-          temperature: req.temperature,
+          ...(req.omitTemperature ? {} : { temperature: req.temperature }),
           system,
           messages: req.messages,
         }),
         signal: req.signal ? AbortSignal.any([controller.signal, req.signal]) : controller.signal,
       });
       if (!res.ok) {
-        const body = await res.text().catch(() => "");
+        await res.body?.cancel();
         const retryable = res.status === 429 || res.status >= 500 || res.status === 529;
-        throw new ProviderError(`Anthropic API error ${res.status}: ${body.slice(0, 300)}`, "anthropic", retryable, res.status);
+        throw new ProviderError(`Anthropic API error ${res.status}. Check model access, supported parameters, quota and credentials.`, "anthropic", retryable, res.status);
       }
       const data = (await res.json()) as {
         content: { type: string; text?: string }[];
@@ -59,7 +59,7 @@ export const anthropicAdapter: ProviderAdapter = {
     } catch (err) {
       if (err instanceof ProviderError) throw err;
       const aborted = (err as Error).name === "AbortError";
-      throw new ProviderError(aborted ? "Anthropic request timed out." : `Anthropic request failed: ${(err as Error).message}`, "anthropic", true);
+      throw new ProviderError(aborted ? "Anthropic request timed out." : "Anthropic request failed. Check connectivity and response format.", "anthropic", true);
     } finally {
       clearTimeout(timer);
     }

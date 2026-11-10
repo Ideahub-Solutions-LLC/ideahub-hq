@@ -68,6 +68,8 @@ export type AuthorityPolicy = {
 };
 
 export type ModelConfig = {
+  openaiApi?: "chat_completions" | "responses";
+  omitTemperature?: boolean;
   provider: ProviderKey;
   model: string;
   temperature: number;
@@ -704,3 +706,43 @@ export type AuditEvent = typeof auditEvents.$inferSelect;
 export type UsageEvent = typeof usageEvents.$inferSelect;
 export type Budget = typeof budgets.$inferSelect;
 export type Job = typeof jobs.$inferSelect;
+
+// HQ configuration: business role briefs, provider access evidence and MCP inventory.
+export type OperatingBrief = { mission: string; responsibilities: string[]; deliverables: string[]; escalationRules: string[]; qualityBar: string };
+export const employeeBriefs = sqliteTable("employee_briefs", {
+  employeeId: text("employee_id").primaryKey().references(() => employees.id, { onDelete: "cascade" }),
+  workspaceId: text("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  body: text("body", { mode: "json" }).$type<OperatingBrief>().notNull(),
+  version: integer("version").notNull(),
+  status: text("status").$type<"draft" | "approved">().notNull(),
+  reviewedByUserId: text("reviewed_by_user_id").references(() => users.id),
+  reviewedAt: text("reviewed_at"), updatedAt: text("updated_at").notNull(),
+});
+export const providerCatalogs = sqliteTable("provider_catalogs", {
+  id: text("id").primaryKey(), workspaceId: text("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  provider: text("provider").$type<ProviderKey>().notNull(),
+  models: text("models", { mode: "json" }).$type<{ id: string; label: string }[]>().notNull(),
+  status: text("status").$type<"available" | "missing_credentials" | "failed">().notNull(),
+  credentialFingerprint: text("credential_fingerprint").notNull(),
+  detail: text("detail").notNull(), checkedAt: text("checked_at").notNull(),
+}, (t) => [uniqueIndex("catalog_ws_provider").on(t.workspaceId, t.provider)]);
+export type McpToolDefinition = { name: string; description: string; inputSchema: Record<string, unknown>; readOnlyHint: boolean; hash: string };
+export const mcpServers = sqliteTable("mcp_servers", {
+  id: text("id").primaryKey(), workspaceId: text("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  name: text("name").notNull(), endpoint: text("endpoint").notNull(), credentialEnvVar: text("credential_env_var"),
+  enabled: integer("enabled", { mode: "boolean" }).notNull().default(false), configVersion: integer("config_version").notNull().default(1),
+  ownerUserId: text("owner_user_id").notNull().references(() => users.id),
+  tools: text("tools", { mode: "json" }).$type<McpToolDefinition[]>().notNull(),
+  discoveryStatus: text("discovery_status").$type<"not_checked" | "discovered" | "failed">().notNull(),
+  discoveryConfigVersion: integer("discovery_config_version"), discoveredAt: text("discovered_at"), detail: text("detail").notNull(),
+  createdAt: text("created_at").notNull(), updatedAt: text("updated_at").notNull(),
+});
+export const mcpToolGrants = sqliteTable("mcp_tool_grants", {
+  id: text("id").primaryKey(), workspaceId: text("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  serverId: text("server_id").notNull().references(() => mcpServers.id, { onDelete: "cascade" }),
+  employeeId: text("employee_id").notNull().references(() => employees.id, { onDelete: "cascade" }),
+  toolName: text("tool_name").notNull(), toolHash: text("tool_hash").notNull(), serverConfigVersion: integer("server_config_version").notNull(),
+  policy: text("policy").$type<"reviewed_read" | "approval_required">().notNull(),
+  status: text("status").$type<"active" | "revoked">().notNull(),
+  grantedByUserId: text("granted_by_user_id").notNull().references(() => users.id), createdAt: text("created_at").notNull(), revokedAt: text("revoked_at"),
+}, (t) => [uniqueIndex("mcp_grant_employee_tool").on(t.workspaceId, t.employeeId, t.serverId, t.toolName)]);

@@ -53,6 +53,7 @@ export default async function EmployeePage({ params, searchParams }: { params: P
           <>
             <Link href={`/employees/${e.id}/workspace`} className="btn btn-primary"><MessageSquare size={16} aria-hidden /> Open workspace</Link>
             <Link href={`/employees/${e.id}/development`} className="btn btn-secondary">Develop expertise</Link>
+            <Link href={`/employees/${e.id}/setup`} className="btn btn-secondary">Configuration desk</Link>
             {canEdit && <Link href={`/employees/${e.id}/edit`} className="btn btn-secondary"><Pencil size={16} aria-hidden /> Edit</Link>}
           </>
         }
@@ -148,7 +149,7 @@ export default async function EmployeePage({ params, searchParams }: { params: P
             <Card>
               <CardTitle description="Connector grants. Revoke from Integrations.">Tools & connections</CardTitle>
               {grants.length === 0 ? (
-                <EmptyState title="No tool access" description="This employee can only produce drafts inside the platform." />
+                <EmptyState title="No native connector grants" description="This employee can only produce drafts inside the platform." />
               ) : (
                 <ul className="space-y-2">
                   {grants.map((g) => {
@@ -205,7 +206,8 @@ export default async function EmployeePage({ params, searchParams }: { params: P
               items={[
                 { label: "Provider", value: providerInfo?.displayName ?? e.modelConfig.provider },
                 { label: "Model", value: <code className="kbd">{e.modelConfig.model}</code> },
-                { label: "Temperature", value: e.modelConfig.temperature },
+                { label: "Temperature", value: e.modelConfig.omitTemperature ? "Omitted for model compatibility" : e.modelConfig.temperature },
+                  { label: "OpenAI API mode", value: e.modelConfig.openaiApi ?? "chat_completions" },
                 { label: "Max output", value: `${e.modelConfig.maxOutputTokens} tokens` },
                 { label: "Fallback", value: e.modelConfig.fallbackProvider ? `${e.modelConfig.fallbackProvider} · ${e.modelConfig.fallbackModel ?? "default"}` : "None (pause on failure)" },
                 { label: "Budgets", value: `${fmtCents(e.modelConfig.perTaskBudgetCents)} / task · ${fmtCents(e.modelConfig.monthlyBudgetCents)} / month` },

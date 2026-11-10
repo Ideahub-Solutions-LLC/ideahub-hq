@@ -9,6 +9,7 @@ import { checkBudgets, monthToDate, recordUsage } from "./usage";
 import { enqueueJob } from "@/lib/jobs/queue";
 import { recordAudit } from "@/lib/audit";
 import { listApprovedEmployeeSkills } from "./employee-development";
+import { getOperatingBrief } from "./hq-profile";
 
 /** Persists a user message and queues the employee's reply as a durable job. */
 export function postUserMessage(db: Db, input: { workspaceId: string; employeeId: string; userId: string; content: string; taskId?: string | null }) {
@@ -41,7 +42,8 @@ export async function generateEmployeeReply(db: Db, input: { workspaceId: string
   const snippets = retrieveSnippets(sources, userMessage.content, 3);
   const mems = approvedMemories(db, input.workspaceId, employee.id);
 
-  const system = buildEmployeeSystemPrompt({ employee, skills: skillSummaries, memories: mems, snippets, productName: workspace.settings.productName });
+  const operating = getOperatingBrief(db, input.workspaceId, employee.id);
+  const system = buildEmployeeSystemPrompt({ employee, operatingBrief: operating?.status === "approved" ? operating.body : null, skills: skillSummaries, memories: mems, snippets, productName: workspace.settings.productName });
   const chat: ChatMessage[] = history.filter((m) => m.authorType !== "system").map((m) => ({ role: m.authorType === "user" ? "user" : "assistant", content: m.content }));
 
   const resolved = resolveProvider(employee.modelConfig);

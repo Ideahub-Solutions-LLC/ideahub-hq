@@ -22,6 +22,7 @@ import { effectiveConnectorMode, getConnectorAdapter } from "@/lib/connectors";
 import { recordUsage } from "./usage";
 import { assertContentReview } from "./content";
 import { assertMeetingSourceEvidenceCurrent } from "./workflow-evidence";
+import { assertMcpReviewer, executeMcpDiscovery, isMcpDiscovery, proposeMcpDiscovery, type McpDiscoveryProposal } from "./mcp-registry";
 
 /**
  * Approval engine.
@@ -56,7 +57,8 @@ export type ProposeInput = {
   expiresInHours?: number;
 };
 
-export function proposeAction(db: Db, input: ProposeInput): { approval: Approval; created: boolean } {
+export function proposeAction(db: Db, input: ProposeInput | McpDiscoveryProposal): { approval: Approval; created: boolean } {
+  if ("operation" in input) return proposeMcpDiscovery(db, input);
   const employee = db.select().from(employees).where(and(eq(employees.id, input.employeeId), eq(employees.workspaceId, input.workspaceId))).get();
   if (!employee) throw new NotFoundError("Employee not found in this workspace.");
   if (employee.status !== "active") throw new ApprovalError(`Employee ${employee.name} is ${employee.status}; it cannot propose actions.`);
@@ -151,6 +153,7 @@ function decideApprovalInternal(db: Db, input: { workspaceId: string; approvalId
   }
 
   assertContentReview(db, approval, input.userId, input.decision === "approve");
+  assertMcpReviewer(db, approval, input.userId);
   const now = nowIso();
   const status = input.decision === "approve" ? "approved" : input.decision === "reject" ? "rejected" : "changes_requested";
   db.update(approvals).set({ status, decidedByUserId: input.userId, decidedAt: now, decisionNote: input.note ?? null }).where(eq(approvals.id, approval.id)).run();
@@ -251,6 +254,7 @@ export async function executeApproval(db: Db, input: { workspaceId: string; appr
   }
   const workspace = db.select().from(workspaces).where(eq(workspaces.id, input.workspaceId)).get();
   if (workspace?.settings.emergencyStop) throw new ApprovalError("Emergency stop is active for this workspace. Execution is paused.");
+  if (isMcpDiscovery(approval)) return executeMcpDiscovery(db, approval, input.actorUserId);
   const employee = approval.employeeId ? db.select().from(employees).where(eq(employees.id, approval.employeeId)).get() : null;
   if (employee && employee.status !== "active") throw new ApprovalError(`Employee ${employee.name} is ${employee.status}; execution is paused.`);
   if (!approval.connectorKey) throw new ApprovalError("This action has no connector to execute against.");

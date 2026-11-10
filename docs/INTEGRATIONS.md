@@ -1,5 +1,9 @@
 # Integrations and communication
 
+## MCP configuration foundation
+
+The separate MCP registry now supports real, approved Streamable HTTP metadata discovery and reviewed per-employee tool assignments. It does not invoke employee tools or turn the native business adapters below into live connectors. See [HQ_CONFIGURATION.md](HQ_CONFIGURATION.md) for endpoint allowlisting, server credential references, approvals, definition hashes and remaining OAuth/runtime work.
+
 ## Framework
 
 `src/lib/connectors/index.ts` defines `ConnectorAdapter`:

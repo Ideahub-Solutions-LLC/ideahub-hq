@@ -40,15 +40,16 @@ export type ResolvedProvider = {
  * Falling back is always visible: `degraded` is true and `note` explains why.
  */
 export function resolveProvider(config: ModelConfig): ResolvedProvider {
+  const configured = (adapter: ProviderAdapter): ProviderAdapter => ({ ...adapter, complete: req => adapter.complete({ ...req, openaiApi: config.openaiApi, omitTemperature: config.omitTemperature }) });
   const primary = ADAPTERS[config.provider];
   if (primary.isConfigured()) {
-    return { adapter: primary, model: config.model || primary.defaultModel(), note: null, degraded: false };
+    return { adapter: configured(primary), model: config.model || primary.defaultModel(), note: null, degraded: false };
   }
   if (config.fallbackProvider && config.fallbackProvider !== config.provider) {
     const fb = ADAPTERS[config.fallbackProvider];
     if (fb.isConfigured()) {
       return {
-        adapter: fb,
+        adapter: configured(fb),
         model: config.fallbackModel || fb.defaultModel(),
         note: `${primary.displayName} is not configured; using approved fallback ${fb.displayName}. Output quality may differ between providers.`,
         degraded: true,

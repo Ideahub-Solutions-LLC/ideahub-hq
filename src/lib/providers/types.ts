@@ -3,6 +3,8 @@ import type { ProviderKey } from "@/db/schema";
 export type ChatMessage = { role: "user" | "assistant"; content: string };
 
 export type CompletionRequest = {
+  openaiApi?: "chat_completions" | "responses";
+  omitTemperature?: boolean;
   model: string;
   signal?: AbortSignal;
   system: string;

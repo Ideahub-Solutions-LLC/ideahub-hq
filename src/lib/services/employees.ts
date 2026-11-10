@@ -1,10 +1,11 @@
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import type { Db } from "@/db/client";
-import { ACTION_TYPES, EMPLOYEE_STATUSES, PROVIDERS, SENIORITY_LEVELS, employeeKnowledge, employeeSkills, employees, type Employee, type EmployeeStatus } from "@/db/schema";
+import { ACTION_TYPES, EMPLOYEE_STATUSES, PROVIDERS, SENIORITY_LEVELS, employeeKnowledge, employeeSkills, employees, knowledgeSources, skills, type Employee, type EmployeeStatus } from "@/db/schema";
 import { newId, nowIso, slugify } from "@/lib/ids";
 import { recordAudit } from "@/lib/audit";
 import { NotFoundError } from "@/lib/authz";
+import { validateProfileReferences } from "./hq-profile";
 
 export const PersonalitySchema = z.object({
   tone: z.enum(["warm", "neutral", "direct"]),
@@ -22,14 +23,19 @@ export const AuthoritySchema = z.object({
 });
 
 export const ModelConfigSchema = z.object({
+  openaiApi: z.enum(["chat_completions", "responses"]).optional(),
+  omitTemperature: z.boolean().optional(),
   provider: z.enum(PROVIDERS),
-  model: z.string().min(1).max(100),
+  model: z.string().trim().min(1).max(100).regex(/^[a-zA-Z0-9][a-zA-Z0-9._:/-]*$/, "Use an exact provider model ID without spaces."),
   temperature: z.number().min(0).max(1),
   maxOutputTokens: z.number().int().min(64).max(16000),
   fallbackProvider: z.enum(PROVIDERS).nullable(),
   fallbackModel: z.string().max(100).nullable(),
   perTaskBudgetCents: z.number().int().min(0).nullable(),
   monthlyBudgetCents: z.number().int().min(0).nullable(),
+}).superRefine((v, ctx) => {
+  if (v.fallbackProvider && (!v.fallbackModel?.trim() || v.fallbackProvider === v.provider)) ctx.addIssue({ code: "custom", message: "Choose a different fallback provider and an explicit fallback model.", path: ["fallbackModel"] });
+  if (!v.fallbackProvider && v.fallbackModel) ctx.addIssue({ code: "custom", message: "Select a fallback provider or clear the fallback model.", path: ["fallbackModel"] });
 });
 
 export const EmployeeProfileSchema = z.object({
@@ -55,6 +61,7 @@ export function listEmployees(db: Db, workspaceId: string) {
 }
 
 export function createEmployee(db: Db, input: { workspaceId: string; userId: string; profile: z.infer<typeof EmployeeProfileSchema> }): Employee {
+  validateProfileReferences(db, input.workspaceId, input.profile);
   const now = nowIso();
   const base = slugify(input.profile.name) || "employee";
   let slug = base;
@@ -98,6 +105,7 @@ function mustGet(db: Db, workspaceId: string, id: string) {
 }
 
 export function updateEmployeeProfile(db: Db, input: { workspaceId: string; employeeId: string; userId: string; profile: z.infer<typeof EmployeeProfileSchema> }) {
+  validateProfileReferences(db, input.workspaceId, input.profile);
   const e = mustGet(db, input.workspaceId, input.employeeId);
   bump(db, e, { ...input.profile }, input.userId, "employee.update_profile", { fields: Object.keys(input.profile) });
 }
@@ -108,6 +116,7 @@ export function updateEmployeeAuthority(db: Db, input: { workspaceId: string; em
 }
 
 export function updateEmployeeModelConfig(db: Db, input: { workspaceId: string; employeeId: string; userId: string; modelConfig: z.infer<typeof ModelConfigSchema> }) {
+  input.modelConfig = ModelConfigSchema.parse(input.modelConfig);
   const e = mustGet(db, input.workspaceId, input.employeeId);
   bump(db, e, { modelConfig: input.modelConfig }, input.userId, "employee.update_model", { provider: input.modelConfig.provider, model: input.modelConfig.model });
 }
@@ -119,15 +128,23 @@ export function setEmployeeStatus(db: Db, input: { workspaceId: string; employee
 }
 
 export function setEmployeeSkills(db: Db, input: { workspaceId: string; employeeId: string; userId: string; skillIds: string[] }) {
-  const e = mustGet(db, input.workspaceId, input.employeeId);
-  db.delete(employeeSkills).where(eq(employeeSkills.employeeId, e.id)).run();
-  for (const skillId of input.skillIds) db.insert(employeeSkills).values({ employeeId: e.id, skillId, workspaceId: e.workspaceId, createdAt: nowIso() }).run();
-  bump(db, e, {}, input.userId, "employee.update_skills", { skillIds: input.skillIds });
+  const ids = [...new Set(input.skillIds)];
+  return db.transaction((tx) => {
+    const e = mustGet(tx, input.workspaceId, input.employeeId);
+    for (const id of ids) if (!tx.select().from(skills).where(and(eq(skills.id, id), eq(skills.workspaceId, input.workspaceId))).get()) throw new NotFoundError("Skill not found in this workspace.");
+    tx.delete(employeeSkills).where(eq(employeeSkills.employeeId, e.id)).run();
+    for (const skillId of ids) tx.insert(employeeSkills).values({ employeeId: e.id, skillId, workspaceId: e.workspaceId, createdAt: nowIso() }).run();
+    bump(tx, e, {}, input.userId, "employee.update_skills", { skillIds: input.skillIds });
+  }, { behavior: "immediate" });
 }
 
 export function setEmployeeKnowledge(db: Db, input: { workspaceId: string; employeeId: string; userId: string; sourceIds: string[] }) {
-  const e = mustGet(db, input.workspaceId, input.employeeId);
-  db.delete(employeeKnowledge).where(eq(employeeKnowledge.employeeId, e.id)).run();
-  for (const id of input.sourceIds) db.insert(employeeKnowledge).values({ employeeId: e.id, knowledgeSourceId: id, workspaceId: e.workspaceId, createdAt: nowIso() }).run();
-  bump(db, e, {}, input.userId, "employee.update_knowledge", { sourceIds: input.sourceIds });
+  const ids = [...new Set(input.sourceIds)];
+  return db.transaction((tx) => {
+    const e = mustGet(tx, input.workspaceId, input.employeeId);
+    for (const id of ids) if (!tx.select().from(knowledgeSources).where(and(eq(knowledgeSources.id, id), eq(knowledgeSources.workspaceId, input.workspaceId))).get()) throw new NotFoundError("Knowledge source not found in this workspace.");
+    tx.delete(employeeKnowledge).where(eq(employeeKnowledge.employeeId, e.id)).run();
+    for (const id of ids) tx.insert(employeeKnowledge).values({ employeeId: e.id, knowledgeSourceId: id, workspaceId: e.workspaceId, createdAt: nowIso() }).run();
+    bump(tx, e, {}, input.userId, "employee.update_knowledge", { sourceIds: input.sourceIds });
+  }, { behavior: "immediate" });
 }

@@ -5,7 +5,7 @@ import { requirePermission } from "@/lib/auth/context";
 import { getEmployee } from "@/lib/services/employees";
 import { can } from "@/lib/authz";
 import { ACTION_TYPES, PROVIDERS, departments, knowledgeSources, skills, users, workspaceMembers } from "@/db/schema";
-import { Card, LinkTabs, PageHeader, Notice } from "@/components/ui/card";
+import { Card, CardTitle, LinkTabs, PageHeader, Notice } from "@/components/ui/card";
 import { Flash } from "@/components/ui/flash";
 import { SubmitButton } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,9 @@ import { EmployeeProfileForm } from "../../employee-form";
 import { updateAuthorityAction, updateKnowledgeAction, updateModelConfigAction, updateProfileAction, updateSkillsAction } from "../../actions";
 import { ACTION_TYPE_LABEL } from "@/lib/format";
 import { listProviders } from "@/lib/providers";
+import { getOperatingBrief } from "@/lib/services/hq-profile";
+import { getProviderCatalog, modelAccess } from "@/lib/services/provider-catalog";
+import { saveOperatingBriefAction } from "../setup/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -28,9 +31,13 @@ export default async function EditEmployeePage({ params, searchParams }: { param
   const allSkills = db.select().from(skills).where(eq(skills.workspaceId, workspace.id)).all();
   const allSources = db.select().from(knowledgeSources).where(eq(knowledgeSources.workspaceId, workspace.id)).all();
   const providers = listProviders();
+  const operating = getOperatingBrief(db, workspace.id, id);
+  const catalogs = providers.flatMap(p => (getProviderCatalog(db, workspace.id, p.key)?.models ?? []).map(m => ({ ...m, provider: p.key })));
+  const access = modelAccess(db, workspace.id, e.modelConfig.provider, e.modelConfig.model);
   const base = `/employees/${e.id}/edit`;
   const tabs = [
     { href: base, label: "Profile & personality" },
+    { href: `${base}?tab=operating`, label: "Operating brief" },
     { href: `${base}?tab=skills`, label: "Skills" },
     { href: `${base}?tab=knowledge`, label: "Knowledge" },
     ...(can(role, "employee.authority.edit") ? [{ href: `${base}?tab=authority`, label: "Authority" }] : []),
@@ -49,6 +56,11 @@ export default async function EditEmployeePage({ params, searchParams }: { param
           <EmployeeProfileForm employee={e} departments={depts} people={people} action={updateProfileAction.bind(null, e.id)} submitLabel="Save profile" />
         </Card>
       )}
+
+      {tab === "operating" && <Card><CardTitle description="Define the role before assigning live models and tools. A new or edited brief stays draft until an owner/admin reviews it.">Operating brief {operating ? `· v${operating.version} · ${operating.status}` : ""}</CardTitle><form action={saveOperatingBriefAction.bind(null, e.id)} className="space-y-5">
+        <div><label className="label" htmlFor="mission">Mission</label><textarea className="textarea" id="mission" name="mission" required minLength={10} maxLength={1200} defaultValue={operating?.body.mission ?? ""} placeholder="What should this employee help the team achieve?" /></div>
+        {([{ key: "responsibilities", label: "Responsibilities", placeholder: "One responsibility per line" }, { key: "deliverables", label: "Expected deliverables", placeholder: "One output type per line" }, { key: "escalationRules", label: "Escalation rules", placeholder: "When should it stop and ask its human manager? One rule per line." }] as const).map(field => <div key={field.key}><label className="label" htmlFor={field.key}>{field.label}</label><textarea className="textarea" id={field.key} name={field.key} required maxLength={4800} defaultValue={operating?.body[field.key].join("\n") ?? ""} placeholder={field.placeholder} /><p className="hint">1–12 lines, up to 400 characters each.</p></div>)}
+        <div><label className="label" htmlFor="qualityBar">Quality and acceptance criteria</label><textarea className="textarea" id="qualityBar" name="qualityBar" required minLength={10} maxLength={1200} defaultValue={operating?.body.qualityBar ?? ""} /></div><Notice tone="neutral">This brief shapes chat instructions only after review. It does not grant tool access or replace approved skills and knowledge.</Notice><SubmitButton>Save draft operating brief</SubmitButton></form></Card>}
 
       {tab === "skills" && (
         <Card>
@@ -128,6 +140,7 @@ export default async function EditEmployeePage({ params, searchParams }: { param
         <Card>
           <form action={updateModelConfigAction.bind(null, e.id)} className="space-y-5">
             <Notice tone="neutral">Credentials never live here. Provider keys are read from server environment variables; this form only chooses which configured provider and model the employee uses. Output quality is not guaranteed to be identical across providers.</Notice>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2"><div><label className="label" htmlFor="openaiApi">OpenAI API mode (also applies to fallback)</label><select className="select" id="openaiApi" name="openaiApi" defaultValue={e.modelConfig.openaiApi ?? "chat_completions"}><option value="chat_completions">Chat Completions · existing behavior</option><option value="responses">Responses · text generation</option></select></div><label className="flex items-center gap-2 text-sm"><input type="checkbox" name="omitTemperature" defaultChecked={e.modelConfig.omitTemperature ?? false} />Omit temperature for models that do not support it</label></div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label className="label" htmlFor="provider">Provider</label>
@@ -142,7 +155,7 @@ export default async function EditEmployeePage({ params, searchParams }: { param
               </div>
               <div>
                 <label className="label" htmlFor="model">Model</label>
-                <input id="model" name="model" defaultValue={e.modelConfig.model} className="input" />
+                <input id="model" name="model" required list="available-model-ids" defaultValue={e.modelConfig.model} className="input" /><datalist id="available-model-ids">{catalogs.map(m => <option key={`${m.provider}:${m.id}`} value={m.id}>{m.provider} · {m.label}</option>)}</datalist><p className="hint">{access.detail}</p><Link className="text-xs text-accent hover:underline" href="/admin/providers">Refresh provider model access</Link>
               </div>
               <div>
                 <label className="label" htmlFor="temperature">Temperature (0–1)</label>
@@ -155,16 +168,16 @@ export default async function EditEmployeePage({ params, searchParams }: { param
               <div>
                 <label className="label" htmlFor="fallbackProvider">Fallback provider (optional)</label>
                 <select id="fallbackProvider" name="fallbackProvider" defaultValue={e.modelConfig.fallbackProvider ?? ""} className="select">
-                  <option value="">None — pause the task if the provider fails</option>
+                  <option value="">None — no alternative live provider</option>
                   {PROVIDERS.filter((p) => p !== "demo").map((p) => (
                     <option key={p} value={p}>{providers.find((x) => x.key === p)?.displayName ?? p}</option>
                   ))}
                 </select>
-                <p className="hint">Only used when data permissions, capability and budget allow. Fallback never re-runs an external action.</p>
+                <p className="hint">Current routing uses this provider when the primary credential is missing. Runtime API errors are surfaced; they do not automatically retry on another provider. Missing credentials can still resolve to labeled Offline Demo.</p>
               </div>
               <div>
                 <label className="label" htmlFor="fallbackModel">Fallback model</label>
-                <input id="fallbackModel" name="fallbackModel" defaultValue={e.modelConfig.fallbackModel ?? ""} className="input" />
+                <input id="fallbackModel" name="fallbackModel" list="available-model-ids" defaultValue={e.modelConfig.fallbackModel ?? ""} className="input" />
               </div>
               <div>
                 <label className="label" htmlFor="perTaskBudgetCents">Per-task budget (cents, blank = none)</label>

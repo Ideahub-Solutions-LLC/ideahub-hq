@@ -66,6 +66,8 @@ export async function updateModelConfigAction(employeeId: string, fd: FormData) 
   const ctx = await requirePermission("employee.model.edit");
   try {
     const modelConfig = ModelConfigSchema.parse({
+      openaiApi: str(fd, "openaiApi") || "chat_completions",
+      omitTemperature: bool(fd, "omitTemperature"),
       provider: str(fd, "provider"),
       model: str(fd, "model"),
       temperature: num(fd, "temperature", 0.2),

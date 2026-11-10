@@ -14,6 +14,7 @@ import { decideApprovalAction, retryExecutionAction } from "../actions";
 import { ACTION_TYPE_LABEL, fmtDateTime } from "@/lib/format";
 import { effectiveConnectorMode } from "@/lib/connectors";
 import { Markdown } from "@/components/ui/markdown";
+import { isMcpDiscovery } from "@/lib/services/mcp-registry";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +27,8 @@ export default async function ApprovalPage({ params, searchParams }: { params: P
   const artifact = a.artifactId ? db.select().from(artifacts).where(eq(artifacts.id, a.artifactId)).get() ?? null : null;
   const connector = a.connectorKey ? db.select().from(connectors).where(and(eq(connectors.workspaceId, workspace.id), eq(connectors.key, a.connectorKey))).get() ?? null : null;
   const eff = connector ? effectiveConnectorMode(connector.key, connector.mode) : null;
-  const canDecide = can(role, "approval.decide") && (a.status === "pending" || a.status === "changes_requested");
+  const mcpDiscovery = isMcpDiscovery(a);
+  const canDecide = can(role, "approval.decide") && (!mcpDiscovery || can(role, "connector.manage")) && (a.status === "pending" || a.status === "changes_requested");
   const isDraft = a.actionType === "review_draft";
   const receipt = a.receipts[0] ?? null;
   const payloadText = typeof a.payload.text === "string" ? a.payload.text : null;
@@ -43,7 +45,7 @@ export default async function ApprovalPage({ params, searchParams }: { params: P
             <CardTitle description={isDraft ? "This is a review of a draft. Approving it records that a human accepted the draft — nothing is sent or created." : "This is the exact action that will run if approved. The approval is bound to this payload; any change invalidates it."}>
               {isDraft ? "What you are approving" : "Exact proposed action"}
             </CardTitle>
-            {isDraft ? <Notice tone="accent">No external effect. A separate approval is required to create tasks or send messages from this draft.</Notice> : (
+            {mcpDiscovery ? <Notice tone="accent" title="Read-only MCP discovery">Approving contacts the exact MCP endpoint below to initialize a session and list tool definitions. No tool is invoked and no employee or business content is sent. Only a connection administrator may approve this check.</Notice> : isDraft ? <Notice tone="accent">No external effect. A separate approval is required to create tasks or send messages from this draft.</Notice> : (
               <Notice tone={eff?.mode === "demo" ? "amber" : "rose"} title={eff?.mode === "demo" ? "Demo connector — simulated execution" : "External action"}>
                 {eff?.mode === "demo" ? `Approving runs the Demo adapter for ${connector?.name}. A simulated receipt is recorded; nothing is delivered outside the platform.` : `Approving executes against ${connector?.name ?? "the connector"}.`}
               </Notice>
@@ -52,7 +54,7 @@ export default async function ApprovalPage({ params, searchParams }: { params: P
               <DescriptionList
                 items={[
                   { label: "Destination", value: <code className="kbd">{a.destination}</code> },
-                  { label: "Connector", value: connector ? <span className="inline-flex items-center gap-2">{connector.name} {eff && <ModeBadge mode={eff.mode} />}</span> : "Internal (platform only)" },
+                  { label: "Connector", value: mcpDiscovery ? "MCP metadata discovery" : connector ? <span className="inline-flex items-center gap-2">{connector.name} {eff && <ModeBadge mode={eff.mode} />}</span> : "Internal (platform only)" },
                   { label: "Proposed by", value: a.employee ? <span className="inline-flex items-center gap-1.5"><AiAvatar seed={a.employee.avatarSeed} name={a.employee.name} size={20} /> {a.employee.name} (AI)</span> : "—" },
                   { label: "Requested", value: fmtDateTime(a.requestedAt) },
                   { label: "Expires", value: fmtDateTime(a.expiresAt) },
@@ -119,7 +121,7 @@ export default async function ApprovalPage({ params, searchParams }: { params: P
                 <label className="label" htmlFor="note">Note (optional, recorded in the audit log)</label>
                 <textarea id="note" name="note" className="textarea min-h-[4rem]" maxLength={1000} placeholder="Why, or what to change…" />
                 <div className="flex flex-wrap gap-2">
-                  <SubmitButton formAction={decideApprovalAction.bind(null, a.id, "approve")} variant="success" pendingText="Working…">{isDraft ? "Accept draft" : eff?.mode === "demo" ? "Approve & simulate" : "Approve & execute"}</SubmitButton>
+                  <SubmitButton formAction={decideApprovalAction.bind(null, a.id, "approve")} variant="success" pendingText="Working…">{mcpDiscovery ? "Approve & discover tools" : isDraft ? "Accept draft" : eff?.mode === "demo" ? "Approve & simulate" : "Approve & execute"}</SubmitButton>
                   <SubmitButton formAction={decideApprovalAction.bind(null, a.id, "changes_requested")} variant="secondary">Request changes</SubmitButton>
                   <SubmitButton formAction={decideApprovalAction.bind(null, a.id, "reject")} variant="danger">Reject</SubmitButton>
                 </div>
@@ -145,7 +147,7 @@ export default async function ApprovalPage({ params, searchParams }: { params: P
                 />
               ) : <p className="text-sm text-ink-2">No receipt recorded.</p>}
               {receipt?.result?.summary ? <p className="mt-3 rounded-xl bg-surface-2 p-3 text-sm text-ink-2">{String(receipt.result.summary)}</p> : null}
-              {(a.status === "execution_unknown" || receipt?.status === "unknown") && can(role, "approval.execute") && (
+              {!mcpDiscovery && (a.status === "execution_unknown" || receipt?.status === "unknown") && can(role, "approval.execute") && (
                 <form action={retryExecutionAction.bind(null, a.id)} className="mt-3">
                   <SubmitButton variant="secondary" size="sm">Reconcile & retry safely</SubmitButton>
                   <p className="hint">Checks the destination first; never re-runs an action that already happened.</p>
@@ -153,6 +155,7 @@ export default async function ApprovalPage({ params, searchParams }: { params: P
               )}
             </Card>
           )}
+          {mcpDiscovery && can(role, "connector.manage") && <Link className="btn btn-secondary" href={`/integrations/mcp/${String(a.payload.serverId)}`}>Open MCP connection and inventory</Link>}
         </div>
       </div>
     </div>

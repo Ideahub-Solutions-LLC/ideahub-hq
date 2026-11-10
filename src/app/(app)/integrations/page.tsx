@@ -24,9 +24,9 @@ export default async function IntegrationsPage({ searchParams }: { searchParams:
 
   return (
     <div className="anim-rise">
-      <PageHeader eyebrow="Connections" title="Integrations & communication" description="Each connection shows its owner, scope, permissions and an honest status. Live means credentials are configured and a real adapter exists; Demo means simulated; nothing here delivers a message externally today." />
+      <PageHeader eyebrow="Connections" title="Integrations & communication" description="Business connector adapters and MCP server discovery have separate capabilities. Review each connection before granting employee access." actions={manage && <Link className="btn btn-primary" href="/integrations/mcp">MCP connections</Link>} />
       <Flash ok={sp.ok} error={sp.error} />
-      <div className="mb-5"><Notice tone="amber" title="Truth in labeling">In this version every connector is Demo, Disconnected or Planned. Live adapters are implemented only after authorized credentials and a sandbox exist — see docs/INTEGRATIONS.md for the exact steps.</Notice></div>
+      <div className="mb-5"><Notice tone="amber" title="Connection capabilities">The business adapters below remain Demo, Disconnected or Planned. MCP connections can separately discover real tool metadata after approval; employee tool invocation and business delivery are not enabled there.</Notice></div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {rows.map((c) => {

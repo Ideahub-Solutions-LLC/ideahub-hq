@@ -12,6 +12,7 @@ export type NavCounts = { approvals: number; memoryProposals: number };
 const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/office", label: "Office", icon: Building2 },
+  { href: "/hq/setup", label: "HQ readiness", icon: ShieldCheck },
   { href: "/employees", label: "Employees", icon: Users },
   { href: "/tasks", label: "Tasks", icon: KanbanSquare },
   { href: "/approvals", label: "Approvals", icon: ShieldCheck, countKey: "approvals" as const },

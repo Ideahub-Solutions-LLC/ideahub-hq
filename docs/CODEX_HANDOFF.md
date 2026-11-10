@@ -1,5 +1,7 @@
 # Codex handoff — IdeaHub AI Team v0.1 (internal pilot)
 
+> HQ configuration continuation: profiles now have reviewed operating briefs; HQ readiness exposes setup gaps; provider catalog checks and per-employee API settings are implemented; MCP supports approved metadata discovery and pinned assignments. Tool invocation, OAuth onboarding and live model quality remain unqualified. See [HQ_CONFIGURATION.md](HQ_CONFIGURATION.md). Current validation: 203 tests in 19 files, both TypeScript checks, lint and Webpack build.
+
 > Local continuation on 7 Nov 2026: see [LOCAL_PILOT.md](LOCAL_PILOT.md) and [LOCAL_VERIFICATION.md](LOCAL_VERIFICATION.md). The verification tables below describe the original delivery; current auth controls and remaining staging gates are documented in those files.
 
 > 10 Nov 2026: Juno's content brief → draft → human review workflow and heartbeat-driven office activity are implemented. See [JUNO_CONTENT_WORKFLOW.md](JUNO_CONTENT_WORKFLOW.md) and [JUNO_CONTENT_VERIFICATION.md](JUNO_CONTENT_VERIFICATION.md). Existing employee configuration was preserved; live writing and Teams remain unqualified/unconnected. The current suite passes 183 tests across 17 files.
