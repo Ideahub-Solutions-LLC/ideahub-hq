@@ -8,6 +8,8 @@ import type { WorkspaceRole } from "@/db/schema";
  */
 export const PERMISSIONS = {
   "workspace.view": ["owner", "admin", "manager", "member"],
+  "workspace.records.create": ["owner", "admin", "manager", "member"],
+  "workspace.records.manage": ["owner", "admin", "manager"],
   "employee.create": ["owner", "admin", "manager"],
   "employee.edit": ["owner", "admin", "manager"],
   "employee.pause": ["owner", "admin", "manager"],

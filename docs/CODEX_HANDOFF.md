@@ -119,3 +119,7 @@ git push -u origin main
 ```
 
 Exporting code does **not** transfer: the local SQLite database (`data/` is git-ignored — re-run `pnpm db:setup`), `.env.local` secrets, or any provider/connector configuration. Each environment must run migrations (`pnpm db:migrate`) and configure env vars separately.
+
+## HQ organization continuation
+
+The shared HQ now includes native Drive, Calendar, CRM, Library and Mailbox drafts; scoped Tasks; grouped navigation; Teams and Activity; and a categorized Tools & apps setup catalog. See [WORKSPACE_ORGANIZATION.md](WORKSPACE_ORGANIZATION.md) for capabilities, storage limits and the explicit boundary between saved app setup and live access. Migration `0005_workspace_organization` is additive. Back up existing databases and migrate without reseeding. New native records are human-managed; AI invocation and external OAuth/synchronization remain follow-up work.

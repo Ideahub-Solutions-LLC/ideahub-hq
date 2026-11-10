@@ -295,3 +295,10 @@ a {
 .table td { padding: 0.65rem 0.75rem; border-bottom: 1px solid var(--line); vertical-align: top; }
 .table tr:last-child td { border-bottom: none; }
 .scrollbar-thin { scrollbar-width: thin; }
+
+/* Workspace app catalogue: native dialog handles focus trapping and Escape. */
+.app-catalog-dialog { width: min(1000px, calc(100vw - 32px)); max-height: 88dvh; margin: auto; padding: 0; overflow: auto; border: 1px solid var(--line-strong); border-radius: 20px; background: var(--surface); color: var(--ink); box-shadow: var(--shadow-lg); }
+.app-catalog-dialog::backdrop { background: color-mix(in srgb, var(--canvas) 72%, transparent); backdrop-filter: blur(5px); }
+
+.nav-drawer { margin: 0; padding: 0; border: 0; width: min(300px, 90vw); max-width: 90vw; height: 100dvh; max-height: 100dvh; background: var(--surface); color: var(--ink); }
+.nav-drawer::backdrop { background: color-mix(in srgb, var(--ink) 35%, transparent); }

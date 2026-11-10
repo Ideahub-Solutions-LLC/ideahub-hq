@@ -10,7 +10,7 @@
  *    swap must never erase the employee's business context.
  *  - Timestamps are ISO-8601 strings (UTC) for portability between SQLite and Postgres.
  */
-import { sqliteTable, text, integer, index, uniqueIndex, primaryKey } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, index, uniqueIndex, primaryKey, blob } from "drizzle-orm/sqlite-core";
 import { relations } from "drizzle-orm";
 
 // ───────────────────────────── Enums (as TS unions) ─────────────────────────────
@@ -746,3 +746,31 @@ export const mcpToolGrants = sqliteTable("mcp_tool_grants", {
   status: text("status").$type<"active" | "revoked">().notNull(),
   grantedByUserId: text("granted_by_user_id").notNull().references(() => users.id), createdAt: text("created_at").notNull(), revokedAt: text("revoked_at"),
 }, (t) => [uniqueIndex("mcp_grant_employee_tool").on(t.workspaceId, t.employeeId, t.serverId, t.toolName)]);
+
+export const WORK_RECORD_KINDS = ["folder", "file", "event", "company", "contact", "deal", "content", "mail"] as const;
+export type WorkRecordKind = typeof WORK_RECORD_KINDS[number];
+export const workRecords = sqliteTable("work_records", {
+  id: text("id").primaryKey(), workspaceId: text("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  kind: text("kind").$type<WorkRecordKind>().notNull(), title: text("title").notNull(),
+  departmentId: text("department_id").references(() => departments.id), employeeId: text("employee_id").references(() => employees.id),
+  createdByUserId: text("created_by_user_id").notNull().references(() => users.id),
+  parentId: text("parent_id"), data: text("data", { mode: "json" }).$type<Record<string, unknown>>().notNull(),
+  version: integer("version").notNull().default(1), archivedAt: text("archived_at"),
+  createdAt: text("created_at").notNull(), updatedAt: text("updated_at").notNull(),
+}, (t) => [index("work_records_scope").on(t.workspaceId, t.kind, t.departmentId, t.employeeId)]);
+export const driveBlobs = sqliteTable("drive_blobs", {
+  recordId: text("record_id").primaryKey().references(() => workRecords.id, { onDelete: "cascade" }),
+  workspaceId: text("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  bytes: blob("bytes", { mode: "buffer" }).notNull(), sizeBytes: integer("size_bytes").notNull(),
+});
+export const appInstallations = sqliteTable("app_installations", {
+  id: text("id").primaryKey(), workspaceId: text("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  appKey: text("app_key").notNull(), scopeKey: text("scope_key").notNull(),
+  departmentId: text("department_id").references(() => departments.id), employeeId: text("employee_id").references(() => employees.id),
+  ownerUserId: text("owner_user_id").notNull().references(() => users.id), accountLabel: text("account_label").notNull(),
+  requestedScopes: text("requested_scopes", { mode: "json" }).$type<string[]>().notNull(),
+  mcpServerId: text("mcp_server_id").references(() => mcpServers.id),
+  status: text("status").$type<"setup_required" | "disabled">().notNull(), version: integer("version").notNull().default(1),
+  createdAt: text("created_at").notNull(), updatedAt: text("updated_at").notNull(),
+}, (t) => [uniqueIndex("app_installation_scope").on(t.workspaceId, t.appKey, t.scopeKey)]);
+export type WorkRecord = typeof workRecords.$inferSelect;

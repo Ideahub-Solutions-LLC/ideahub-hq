@@ -112,3 +112,7 @@ Costs are estimated only if you provide `PROVIDER_PRICING_JSON` (USD per 1M toke
 ## License / ownership
 
 Internal IdeaHub Solutions LLC project. Sistava.com was used only as public inspiration for the general concept; no branding, assets, text or proprietary material from it is used here.
+
+### Shared HQ work areas
+
+Daily work is now grouped into **Chat, Tasks, Calendar, Drive, CRM, Library and Mailbox**. **Tools & apps** provides a searchable catalog and guided ownership/access setup; **Teams** links to scoped work areas and **Activity** shows real saved events. Native records persist locally. Saving an app setup does not connect an external account or grant employee tools. See [Workspace organization](docs/WORKSPACE_ORGANIZATION.md) for the exact capabilities and limits.

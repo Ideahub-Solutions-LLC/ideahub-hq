@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
   // Do not expose any server env to the client. Only NEXT_PUBLIC_* is readable in the browser.
   poweredByHeader: false,
   reactStrictMode: true,
+  experimental: { serverActions: { bodySizeLimit: "6mb" } },
 };
 
 export default nextConfig;

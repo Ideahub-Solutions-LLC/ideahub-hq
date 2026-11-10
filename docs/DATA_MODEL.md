@@ -86,3 +86,7 @@ To change the fictional accounts, edit `src/db/demo-users.ts` and `src/db/seed.t
 ## Authentication additions (local P0)
 
 `auth_rate_limits` holds hashed global authentication buckets, attempt counts and expiry milliseconds. `password_resets` holds a recovery-code hash, user, authorizing workspace and expiry. These are global authentication support records (users/sessions span workspaces); recovery issuance verifies the workspace and role in the service. Migrations: `0001_auth_recovery.sql` and `0002_recovery_issuer.sql`. Recovery codes also record their issuer so later permission changes are enforced at redemption.
+
+## Shared work areas
+
+Migration `0005_workspace_organization` adds `work_records`, `drive_blobs` and `app_installations`. Work records use validated schemas for folder/file/event/company/contact/deal/content/mail, optimistic edit versions and recoverable archives. Workspace references are checked in services. Scopes filter shared records; they are not team-level access controls. Binary files are SQLite blobs with service-enforced limits. App installations are setup intent records, not credentials or live connector grants. See [Workspace organization](WORKSPACE_ORGANIZATION.md).

@@ -1,3 +1,6 @@
+import { z } from "zod";
+import { validateWorkScope } from "./workspace-records";
+import { requireActor, validateProfileReferences } from "./hq-profile";
 import { and, desc, eq } from "drizzle-orm";
 import type { Db } from "@/db/client";
 import { artifacts, employees, taskEvents, tasks, type Task, type TaskStatus } from "@/db/schema";
@@ -32,6 +35,13 @@ export function listTasks(db: Db, workspaceId: string) {
 }
 
 export function createTask(db: Db, input: { workspaceId: string; title: string; objective: string; employeeId?: string | null; departmentId?: string | null; ownerUserId?: string | null; requestedByUserId: string; priority?: Task["priority"]; dueAt?: string | null; status?: TaskStatus }): Task {
+  requireActor(db, input.workspaceId, input.requestedByUserId, "task.create");
+  validateWorkScope(db, input.workspaceId, {departmentId:input.departmentId ?? null,employeeId:input.employeeId ?? null});
+  validateProfileReferences(db,input.workspaceId,{departmentId:input.departmentId ?? null,managerUserId:input.ownerUserId ?? input.requestedByUserId});
+  z.string().trim().min(3).max(140).parse(input.title);
+  z.string().max(2000).parse(input.objective);
+  z.enum(["low","normal","high"]).parse(input.priority ?? "normal");
+  if (input.dueAt && !z.string().date().safeParse(input.dueAt).success && !z.string().datetime({offset:true}).safeParse(input.dueAt).success) throw new Error("Use a valid due date.");
   const now = nowIso();
   const task: Task = {
     id: newId("tsk"),
