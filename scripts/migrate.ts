@@ -1,4 +1,7 @@
+import { loadEnvConfig } from "@next/env";
 import { createDb, runMigrations } from "../src/db/client";
+
+loadEnvConfig(process.cwd());
 
 const db = createDb();
 runMigrations(db);

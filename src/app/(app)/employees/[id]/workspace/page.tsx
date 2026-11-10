@@ -15,6 +15,7 @@ import { WORKFLOWS } from "@/lib/workflows/runner";
 import { fmtDateTime, timeAgo } from "@/lib/format";
 import { approvedSourcesForEmployee } from "@/lib/services/retrieval";
 import { can } from "@/lib/authz";
+import { isContentEmployee } from "@/lib/services/content-role";
 import { listProviders } from "@/lib/providers";
 
 export const dynamic = "force-dynamic";
@@ -81,6 +82,7 @@ export default async function WorkspacePage({ params, searchParams }: { params: 
         </Card>
 
         <div className="space-y-6 lg:col-span-2">
+          {isContentEmployee(e.roleTitle) && <Card><CardTitle>Content workflow</CardTitle><p className="mb-4 text-sm text-ink-2">Submit a brief, draft from approved brand sources, and review the exact version. Watch run stages and heartbeat in the office.</p><Link className="btn btn-primary" href={`/employees/${e.id}/content/new`}>Assign content brief</Link><Link className="ml-3 text-sm text-accent" href={`/office?employee=${e.id}`}>Watch in office</Link></Card>}
           <Card>
             <CardTitle description="Readable without the chat: objective, status, next action.">Current task</CardTitle>
             {!current ? (
@@ -118,7 +120,7 @@ export default async function WorkspacePage({ params, searchParams }: { params: 
                     ))}
                   </select>
                   <label className="flex items-center gap-2 text-xs text-ink-2">
-                    <input type="checkbox" name="useModel" className="h-4 w-4 accent-[var(--accent)]" disabled={!liveProvider} /> Use the configured model for extraction (validated against the source){!liveProvider && " — unavailable without a provider key"}
+                    <input type="checkbox" name="useModel" className="h-4 w-4 accent-[var(--accent)]" disabled={!liveProvider} /> Use the configured model for extraction (source wording checks; human review required){!liveProvider && " — unavailable without a provider key"}
                   </label>
                   <SubmitButton size="sm" pendingText="Running…" disabled={e.status !== "active" || !hasMeetingSkill} title={!hasMeetingSkill ? "Assign the approved Meeting follow-through skill first" : undefined}>Draft action list</SubmitButton>
                 </form>

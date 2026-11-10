@@ -22,7 +22,7 @@ export default async function DepartmentPage({ params }: { params: Promise<{ slu
 
   return (
     <div className="anim-rise">
-      <PageHeader eyebrow={<Link href="/office" className="hover:underline">Office</Link>} title={dept.name} description={dept.purpose} />
+      <PageHeader eyebrow={<Link href="/office" className="hover:underline">Office</Link>} title={dept.name} description={dept.purpose} actions={<Link href={`/employees/development?department=${dept.id}`} className="btn btn-secondary">Develop department expertise</Link>} />
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
           <Card>

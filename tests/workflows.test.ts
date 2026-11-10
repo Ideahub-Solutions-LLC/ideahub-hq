@@ -141,3 +141,11 @@ describe("workflow runner", () => {
     expect((art.content as { generatedBy: string }).generatedBy).toBe("deterministic-summary-v1");
   });
 });
+
+
+it("leaves ambiguous first names and aliases unassigned instead of picking the first roster entry", () => {
+  const roster = [{ userId: "one", name: "Sam Okafor", aliases: ["ops"] }, { userId: "two", name: "Sam Owens", aliases: ["ops"] }];
+  const draft = extractMeetingActions({ content: "Action items\n- Sam will send the packet.\n- Sam Okafor will review the notes.", roster, sourceId: "source", sourceTitle: "Sync" });
+  expect(draft.items[0]).toMatchObject({ ownerStatus: "unverified", proposedOwnerUserId: null });
+  expect(draft.items[1]).toMatchObject({ ownerStatus: "identified", proposedOwnerUserId: "one" });
+});

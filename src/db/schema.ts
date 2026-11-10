@@ -130,6 +130,22 @@ export const sessions = sqliteTable(
   (t) => [index("sessions_user").on(t.userId)],
 );
 
+// Global authentication records: users may belong to several workspaces.
+export const authRateLimits = sqliteTable("auth_rate_limits", {
+  key: text("key").primaryKey(), // hashed email/address + operation, never raw identifiers
+  attempts: integer("attempts").notNull(),
+  expiresAt: integer("expires_at").notNull(),
+});
+
+export const passwordResets = sqliteTable("password_resets", {
+  issuedByUserId: text("issued_by_user_id").references(() => users.id, { onDelete: "cascade" }),
+  id: text("id").primaryKey(), // SHA-256 of a high-entropy, one-time code
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  workspaceId: text("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  expiresAt: text("expires_at").notNull(),
+  createdAt: text("created_at").notNull(),
+});
+
 export const departments = sqliteTable(
   "departments",
   {
@@ -355,7 +371,7 @@ export const artifacts = sqliteTable(
     workspaceId: text("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
     taskId: text("task_id").references(() => tasks.id, { onDelete: "cascade" }),
     employeeId: text("employee_id").references(() => employees.id),
-    kind: text("kind").$type<"draft_action_list" | "draft_status_summary" | "note" | "message_draft">().notNull(),
+    kind: text("kind").$type<"draft_action_list" | "draft_status_summary" | "content_draft" | "note" | "message_draft">().notNull(),
     title: text("title").notNull(),
     content: text("content", { mode: "json" }).$type<Record<string, unknown>>().notNull(),
     version: integer("version").notNull().default(1),
@@ -557,6 +573,22 @@ export const jobs = sqliteTable(
   },
   (t) => [index("jobs_status_run").on(t.status, t.runAfter)],
 );
+
+export const workflowRuns = sqliteTable("workflow_runs", {
+  id: text("id").primaryKey(),
+  workspaceId: text("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  taskId: text("task_id").notNull().references(() => tasks.id, { onDelete: "cascade" }),
+  employeeId: text("employee_id").notNull().references(() => employees.id),
+  jobId: text("job_id").notNull().references(() => jobs.id, { onDelete: "cascade" }),
+  attempt: integer("attempt").notNull(),
+  status: text("status").$type<"running" | "review" | "failed">().notNull(),
+  stage: text("stage").$type<"validating" | "reading" | "drafting" | "checking" | "review" | "failed">().notNull(),
+  heartbeatAt: text("heartbeat_at").notNull(),
+  startedAt: text("started_at").notNull(),
+  finishedAt: text("finished_at"),
+  reservedCostCents: integer("reserved_cost_cents").notNull().default(0),
+  error: text("error"),
+}, (t) => [uniqueIndex("run_job_attempt").on(t.jobId, t.attempt), index("run_workspace_task").on(t.workspaceId, t.taskId)]);
 
 // ───────────────────────────── Relations (for relational queries) ─────────────────────────────
 export const employeesRelations = relations(employees, ({ one, many }) => ({

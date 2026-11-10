@@ -1,17 +1,16 @@
 "use server";
 
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { getDb } from "@/db/client";
-import { users } from "@/db/schema";
-import { verifyPassword } from "@/lib/auth/password";
+import { authenticate } from "@/lib/services/authentication";
+import { clientAddress } from "@/lib/auth/rate-limit";
 import { createSession, deleteSession, SESSION_COOKIE, WORKSPACE_COOKIE } from "@/lib/auth/session";
 import { listMemberships } from "@/lib/auth/membership";
 import { recordAudit } from "@/lib/audit";
 
-const LoginSchema = z.object({ email: z.string().email(), password: z.string().min(1), next: z.string().optional() });
+const LoginSchema = z.object({ email: z.string().email(), password: z.string().min(1).max(1024), next: z.string().optional() });
 
 export type LoginState = { error?: string } | undefined;
 
@@ -19,10 +18,9 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
   const parsed = LoginSchema.safeParse({ email: String(formData.get("email") ?? "").trim().toLowerCase(), password: String(formData.get("password") ?? ""), next: String(formData.get("next") ?? "") });
   if (!parsed.success) return { error: "Enter a valid email and password." };
   const db = getDb();
-  const user = db.select().from(users).where(eq(users.email, parsed.data.email)).get();
-  // Constant-ish time: verify against a dummy hash when the user does not exist.
-  const ok = user ? verifyPassword(parsed.data.password, user.passwordHash) : verifyPassword(parsed.data.password, "scrypt$16384$8$1$AAAAAAAAAAAAAAAAAAAAAA$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-  if (!user || !ok) return { error: "Incorrect email or password." };
+  const result = authenticate(db, { ...parsed.data, address: clientAddress(await headers()) });
+  if (result.error) return { error: result.error };
+  const user = result.user;
 
   const { token, expiresAt } = createSession(db, user.id);
   const jar = await cookies();

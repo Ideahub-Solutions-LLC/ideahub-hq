@@ -52,6 +52,7 @@ export default async function EmployeePage({ params, searchParams }: { params: P
         actions={
           <>
             <Link href={`/employees/${e.id}/workspace`} className="btn btn-primary"><MessageSquare size={16} aria-hidden /> Open workspace</Link>
+            <Link href={`/employees/${e.id}/development`} className="btn btn-secondary">Develop expertise</Link>
             {canEdit && <Link href={`/employees/${e.id}/edit`} className="btn btn-secondary"><Pencil size={16} aria-hidden /> Edit</Link>}
           </>
         }

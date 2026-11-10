@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/context";
 import { LoginForm } from "./login-form";
@@ -8,7 +9,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const user = await getCurrentUser();
   if (user) redirect("/dashboard");
   const { next } = await searchParams;
-  const showDemo = process.env.NODE_ENV !== "production" || process.env.SHOW_DEMO_LOGINS === "1";
+  const showDemo = process.env.SHOW_DEMO_LOGINS === "1";
   return (
     <main className="flex min-h-dvh items-center justify-center p-6">
       <div className="w-full max-w-md anim-rise">
@@ -19,6 +20,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         </div>
         <div className="card p-6">
           <LoginForm next={next} />
+          <Link href="/login/reset" className="mt-4 block text-sm text-accent hover:underline">Forgot your password?</Link>
         </div>
         {showDemo && (
           <div className="mt-6 rounded-2xl border border-dashed border-line-strong p-4 text-xs text-ink-2">

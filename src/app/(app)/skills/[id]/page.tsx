@@ -44,7 +44,7 @@ export default async function SkillPage({ params, searchParams }: { params: Prom
           </Card>
           {can(role, "skill.edit") && (
             <Card>
-              <CardTitle description="Creates version v{n+1} for review. The previously approved version stays in use until the new one is approved.">Propose a new version</CardTitle>
+              <CardTitle description="Creates a new version for review. This skill is unavailable to employee conversations until its current version is approved.">Propose a new version</CardTitle>
               <SkillForm skill={s} version={current} action={newSkillVersionAction.bind(null, s.id)} submitLabel={`Save as v${s.currentVersion + 1}`} />
             </Card>
           )}

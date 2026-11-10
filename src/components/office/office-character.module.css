@@ -1,0 +1,54 @@
+.character {
+  display: block;
+  flex: none;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.body { transform-origin: 64px 98px; }
+.head { transform-origin: 64px 63px; }
+.eyes { transform-box: fill-box; transform-origin: center; }
+.leftArm { transform-origin: 44px 74px; }
+.rightArm { transform-origin: 84px 74px; }
+.page { transform-origin: 64px 94px; }
+
+/* No animation unless the caller opts in. The scene distinguishes decorative
+   previews from recorded activity. Reduced motion disables every animation. */
+@media (prefers-reduced-motion: no-preference) {
+  .character[data-motion="typing"] .leftArm { animation: type-left 1.05s ease-in-out infinite; }
+  .character[data-motion="typing"] .rightArm { animation: type-right 1.05s ease-in-out infinite; }
+  .character[data-motion="typing"] .screenLines { animation: screen-work 2.8s steps(3, end) infinite; }
+  .character[data-motion="reviewing"] .head { animation: read-page 4.8s ease-in-out infinite; }
+  .character[data-motion="reviewing"] .page { animation: page-tilt 4.8s ease-in-out infinite; }
+  .character[data-motion="waiting"] .body { animation: breathe 4.5s ease-in-out infinite; }
+  .character:not([data-motion="none"]) .eyes { animation: blink 6.3s ease-in-out infinite; }
+}
+
+@keyframes type-left {
+  0%, 50%, 100% { transform: rotate(0deg); }
+  25%, 75% { transform: rotate(-5deg); }
+}
+@keyframes type-right {
+  0%, 50%, 100% { transform: rotate(4deg); }
+  25%, 75% { transform: rotate(0deg); }
+}
+@keyframes screen-work {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+@keyframes read-page {
+  0%, 100% { transform: rotate(-3deg); }
+  45%, 60% { transform: rotate(3deg) translateY(1px); }
+}
+@keyframes page-tilt {
+  0%, 100% { transform: rotate(0deg); }
+  45%, 60% { transform: rotate(-2deg); }
+}
+@keyframes breathe {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1.2px); }
+}
+@keyframes blink {
+  0%, 43%, 47%, 100% { transform: scaleY(1); }
+  45% { transform: scaleY(0.12); }
+}

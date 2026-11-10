@@ -4,6 +4,7 @@ export type ChatMessage = { role: "user" | "assistant"; content: string };
 
 export type CompletionRequest = {
   model: string;
+  signal?: AbortSignal;
   system: string;
   messages: ChatMessage[];
   maxOutputTokens: number;
@@ -11,7 +12,7 @@ export type CompletionRequest = {
   /** When set, the adapter asks the model for a single JSON object and the caller validates it. */
   json?: boolean;
   /** Free-form hint used by the Demo adapter to produce a sensible deterministic answer. */
-  purpose?: "chat" | "meeting_actions" | "weekly_summary";
+  purpose?: "chat" | "meeting_actions" | "weekly_summary" | "content_draft";
   /** Demo adapter only: grounded material that a deterministic reply may cite. */
   demoContext?: { employeeName: string; roleTitle: string; snippets: { title: string; excerpt: string }[] };
 };

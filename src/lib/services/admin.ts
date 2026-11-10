@@ -35,6 +35,7 @@ export function setMemberRole(db: Db, input: { workspaceId: string; actorUserId:
 export function addMember(db: Db, input: { workspaceId: string; actorUserId: string; email: string; name: string; role: WorkspaceRole; temporaryPassword: string }) {
   const email = input.email.trim().toLowerCase();
   let user = db.select().from(users).where(eq(users.email, email)).get();
+  const createdUser = !user;
   if (!user) {
     user = { id: newId("usr"), email, name: input.name.trim() || email, title: null, passwordHash: hashPassword(input.temporaryPassword), createdAt: nowIso() };
     db.insert(users).values(user).run();
@@ -44,7 +45,7 @@ export function addMember(db: Db, input: { workspaceId: string; actorUserId: str
   const id = newId("wm");
   db.insert(workspaceMembers).values({ id, workspaceId: input.workspaceId, userId: user.id, role: input.role, createdAt: nowIso() }).run();
   recordAudit(db, { workspaceId: input.workspaceId, actorUserId: input.actorUserId, action: "member.add", entityType: "workspace_member", entityId: id, data: { role: input.role } });
-  return id;
+  return { id, createdUser };
 }
 
 export function removeMember(db: Db, input: { workspaceId: string; actorUserId: string; memberId: string }) {

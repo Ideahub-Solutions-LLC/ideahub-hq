@@ -18,13 +18,13 @@ export function loadPricingTable(): Record<string, { input: number; output: numb
   }
 }
 
-export function estimateCostCents(provider: ProviderKey, model: string, inputTokens: number, outputTokens: number): number | null {
+export function estimateCostCents(provider: ProviderKey, model: string, inputTokens: number, outputTokens: number, roundUp = false): number | null {
   if (provider === "demo") return 0;
   const table = loadPricingTable();
   const price = table[`${provider}:${model}`] ?? table[`${provider}:*`];
   if (!price) return null;
   const usd = (inputTokens / 1_000_000) * price.input + (outputTokens / 1_000_000) * price.output;
-  return Math.round(usd * 100);
+  return roundUp ? Math.ceil(usd * 100) : Math.round(usd * 100);
 }
 
 export type UsageInput = {
@@ -39,10 +39,11 @@ export type UsageInput = {
   unit: "tokens" | "calls";
   /** Unique key per logical call so retries never double-record. */
   eventKey: string;
+  roundCostUp?: boolean;
 };
 
 export function recordUsage(db: Db, input: UsageInput) {
-  const cost = input.meter === "model_tokens" ? estimateCostCents(input.provider, input.model, input.inputUnits, input.outputUnits) : 0;
+  const cost = input.meter === "model_tokens" ? estimateCostCents(input.provider, input.model, input.inputUnits, input.outputUnits, input.roundCostUp) : 0;
   db.insert(usageEvents)
     .values({
       id: newId("use"),

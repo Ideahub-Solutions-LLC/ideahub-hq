@@ -1,5 +1,8 @@
+import { loadEnvConfig } from "@next/env";
 import fs from "node:fs";
 import path from "node:path";
+
+loadEnvConfig(process.cwd());
 
 const url = process.env.DATABASE_URL ?? "./data/ideahub.db";
 for (const suffix of ["", "-wal", "-shm", "-journal"]) {

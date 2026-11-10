@@ -5,11 +5,15 @@ import { newId, nowIso } from "@/lib/ids";
 import { resolveProvider } from "@/lib/providers";
 import { recordUsage, checkBudgets, monthToDate } from "@/lib/services/usage";
 import { proposeAction } from "@/lib/services/approvals";
+import { assertMeetingSourceEvidenceCurrent, captureMeetingSourceEvidence } from "@/lib/services/workflow-evidence";
 import { extractMeetingActions, groundDraft, type DraftActionList, type RosterEntry } from "./meeting-actions";
 import { buildWeeklySummary, type DraftStatusSummary } from "./weekly-summary";
+import type { JobExecution } from "@/lib/jobs/execution";
+import { runContentDraft } from "./content-draft";
 import { z } from "zod";
 
 export const WORKFLOWS = {
+  content_draft: { key: "content_draft", name: "Content brief → draft → human review", description: "Read an approved brand guide and brief, draft content with claim citations, and request human review. Nothing is published or sent." },
   meeting_actions: { key: "meeting_actions", name: "Meeting record → draft action list", description: "Reads an approved meeting record and drafts action items, decisions and open questions with source lines. Missing owners and dates are flagged, never invented." },
   weekly_summary: { key: "weekly_summary", name: "Weekly status summary", description: "Builds a draft status summary from task records in the period: completed work, in progress, blockers and decisions needed — every line cites its record." },
 } as const;
@@ -55,9 +59,10 @@ export function workspaceRoster(db: Db, workspaceId: string): RosterEntry[] {
 }
 
 /** Entry point used by the job worker. Resumes safely: completed steps are not repeated. */
-export async function runTaskWorkflow(db: Db, taskId: string): Promise<void> {
+export async function runTaskWorkflow(db: Db, taskId: string, execution?: JobExecution): Promise<void> {
   const task = db.select().from(tasks).where(eq(tasks.id, taskId)).get();
   if (!task) throw new WorkflowBlocked("Task not found.");
+  if (task.workflowKey === "content_draft") return runContentDraft(db, taskId, execution);
   if (!task.workflowKey || !(task.workflowKey in WORKFLOWS)) throw new WorkflowBlocked(`Task has no runnable workflow (${task.workflowKey ?? "none"}).`);
   if (task.status === "completed" || task.status === "needs_approval") return; // already produced its draft
   if (task.status === "paused") return;
@@ -100,7 +105,7 @@ async function runMeetingActions(db: Db, task: Task, employeeId: string) {
     s1.fail("Source not approved");
     throw new WorkflowBlocked(`Meeting record "${source.title}" is ${source.reviewStatus}; only approved sources can be used.`);
   }
-  const link = db.select().from(employeeKnowledge).where(and(eq(employeeKnowledge.employeeId, employeeId), eq(employeeKnowledge.knowledgeSourceId, source.id))).get();
+  const link = db.select().from(employeeKnowledge).where(and(eq(employeeKnowledge.workspaceId, task.workspaceId), eq(employeeKnowledge.employeeId, employeeId), eq(employeeKnowledge.knowledgeSourceId, source.id))).get();
   if (!link) {
     s1.fail("No access");
     throw new WorkflowBlocked(`The employee does not have access to "${source.title}". Grant access on the employee's Knowledge tab.`);
@@ -112,6 +117,7 @@ async function runMeetingActions(db: Db, task: Task, employeeId: string) {
   const roster = workspaceRoster(db, task.workspaceId);
   let draft: DraftActionList = extractMeetingActions({ content: source.content, roster, sourceId: source.id, sourceTitle: source.title });
   const employee = db.select().from(employees).where(eq(employees.id, employeeId)).get()!;
+  const sourceEvidence = captureMeetingSourceEvidence(source, employee);
   const resolved = resolveProvider(employee.modelConfig);
   const useModel = Boolean(task.input.useModel) && resolved.adapter.key !== "demo";
   let modelNote: string | null = resolved.note;
@@ -158,13 +164,21 @@ async function runMeetingActions(db: Db, task: Task, employeeId: string) {
           openQuestions: parsed.data.openQuestions.map((d) => ({ text: d.text, sourceLine: d.sourceLine ?? 0, sourceExcerpt: d.sourceExcerpt })),
         };
         draft = groundDraft(modelDraft, source.content, roster);
-        draft.notes.unshift(`Model-generated draft (${res.provider}:${res.model}) validated against the source by the platform.`);
+        draft.notes.unshift(`Model-generated draft (${res.provider}:${res.model}) checked against source wording; a human must verify meaning and scope.`);
       } else {
         modelNote = "Model output failed validation; deterministic extractor result used instead.";
       }
     } catch (err) {
       modelNote = `Model call failed (${(err as Error).message}); deterministic extractor result used instead.`;
     }
+  }
+  // The source or its grant may change while a provider is awaited, even on fallback.
+  // Keep this outside the model catch so authorization failures cannot become drafts.
+  try {
+    assertMeetingSourceEvidenceCurrent(db, { workspaceId: task.workspaceId, employeeId, sourceId, evidence: sourceEvidence });
+  } catch (err) {
+    s2.fail((err as Error).message);
+    throw new WorkflowBlocked((err as Error).message);
   }
   if (modelNote) draft.notes.push(modelNote);
   s2.done({ generatedBy: draft.generatedBy, stats: draft.stats });
@@ -173,7 +187,7 @@ async function runMeetingActions(db: Db, task: Task, employeeId: string) {
   const s3 = step(db, task, 3, "Save draft action list");
   const artifactId = newId("art");
   db.insert(artifacts)
-    .values({ id: artifactId, workspaceId: task.workspaceId, taskId: task.id, employeeId, kind: "draft_action_list", title: `Draft action list — ${source.title}`, content: draft as unknown as Record<string, unknown>, version: 1, status: "draft", reviewedByUserId: null, reviewNote: null, createdAt: nowIso(), updatedAt: nowIso() })
+    .values({ id: artifactId, workspaceId: task.workspaceId, taskId: task.id, employeeId, kind: "draft_action_list", title: `Draft action list — ${source.title}`, content: { ...draft, sourceEvidence } as unknown as Record<string, unknown>, version: 1, status: "draft", reviewedByUserId: null, reviewNote: null, createdAt: nowIso(), updatedAt: nowIso() })
     .run();
   s3.done({ artifactId, items: draft.stats.items, missingOwners: draft.stats.missingOwners });
   logEvent(db, task, "artifact", `Draft action list saved (${draft.stats.items} items, ${draft.stats.missingOwners} missing owners, ${draft.stats.unverifiedOwners} unverified).`, { artifactId }, "employee");

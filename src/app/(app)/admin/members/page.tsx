@@ -7,7 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Flash } from "@/components/ui/flash";
 import { ConfirmSubmitButton, SubmitButton } from "@/components/ui/button";
 import { PersonAvatar } from "@/components/ui/ai-avatar";
-import { addMemberAction, removeMemberAction, setRoleAction } from "../actions";
+import { removeMemberAction, setRoleAction } from "../actions";
+import { AddMemberForm } from "./add-member-form";
+import { RecoveryForm } from "./recovery-form";
 import { fmtDate } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -37,7 +39,7 @@ export default async function MembersPage({ searchParams }: { searchParams: Prom
                       </form>
                     ) : <Badge>{m.role}</Badge>}
                   </td>
-                  <td className="text-ink-3">{fmtDate(m.createdAt)}</td>
+                  <td className="text-ink-3">{fmtDate(m.createdAt)}{(role === "owner" || (m.role !== "owner" && m.role !== "admin")) && <RecoveryForm memberId={m.id} name={u.name} />}</td>
                   <td>{m.role !== "owner" && u.id !== user.id && <form action={removeMemberAction.bind(null, m.id)}><ConfirmSubmitButton size="sm" confirm={`Remove ${u.name} from this workspace?`}>Remove</ConfirmSubmitButton></form>}</td>
                 </tr>
               ))}
@@ -47,13 +49,7 @@ export default async function MembersPage({ searchParams }: { searchParams: Prom
         <div className="space-y-6">
           <Card>
             <CardTitle>Add a member</CardTitle>
-            <form action={addMemberAction} className="space-y-3">
-              <div><label className="label" htmlFor="name">Name</label><input id="name" name="name" required className="input" /></div>
-              <div><label className="label" htmlFor="email">Email</label><input id="email" name="email" type="email" required className="input" /></div>
-              <div><label className="label" htmlFor="role">Role</label><select id="role" name="role" defaultValue="member" className="select">{WORKSPACE_ROLES.filter((r) => r !== "owner" || role === "owner").map((r) => (<option key={r} value={r}>{r}</option>))}</select></div>
-              <SubmitButton>Add member</SubmitButton>
-              <p className="hint">No email delivery exists yet: a temporary password is shown once after adding. SSO/invites are on the roadmap.</p>
-            </form>
+            <AddMemberForm isOwner={role === "owner"} />
           </Card>
           <Card>
             <CardTitle>Permission matrix</CardTitle>

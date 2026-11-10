@@ -27,7 +27,7 @@ export const openaiAdapter: ProviderAdapter = {
           ...(req.json ? { response_format: { type: "json_object" } } : {}),
           messages: [{ role: "system", content: req.system }, ...req.messages],
         }),
-        signal: controller.signal,
+        signal: req.signal ? AbortSignal.any([controller.signal, req.signal]) : controller.signal,
       });
       if (!res.ok) {
         const body = await res.text().catch(() => "");

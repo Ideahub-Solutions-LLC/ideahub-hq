@@ -1,6 +1,9 @@
+import { loadEnvConfig } from "@next/env";
 import { createDb, runMigrations } from "../src/db/client";
 import { workspaces } from "../src/db/schema";
 import { seedWorkspace, DEMO_USERS } from "../src/db/seed";
+
+loadEnvConfig(process.cwd());
 
 async function main() {
   const db = createDb();

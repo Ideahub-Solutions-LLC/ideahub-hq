@@ -33,7 +33,7 @@ export default async function EmployeesPage({ searchParams }: { searchParams: Pr
         eyebrow="Directory"
         title="AI employees"
         description="Every AI employee is a durable record: identity, skills, knowledge, permissions and model settings are kept separately and versioned."
-        actions={can(role, "employee.create") ? <Link href="/employees/new" className="btn btn-primary"><Plus size={16} aria-hidden /> New employee</Link> : undefined}
+        actions={<><Link href="/employees/development" className="btn btn-secondary">Develop expertise</Link>{can(role, "employee.create") && <Link href="/employees/new" className="btn btn-primary"><Plus size={16} aria-hidden /> New employee</Link>}</>}
       />
       <Flash ok={sp.ok} error={sp.error} />
       <form className="card mb-5 grid grid-cols-1 gap-3 p-4 sm:grid-cols-[1fr_auto_auto_auto_auto]" role="search">
@@ -94,13 +94,14 @@ export default async function EmployeesPage({ searchParams }: { searchParams: Pr
                   <dd className="text-ink">{e.manager?.name ?? "Unassigned"}</dd>
                 </div>
               </dl>
-              <div className="mt-4 flex gap-2">
+              <div className="mt-4 flex flex-wrap gap-2">
                 <Link href={`/employees/${e.id}`} className="btn btn-secondary btn-sm">
                   Profile
                 </Link>
                 <Link href={`/employees/${e.id}/workspace`} className="btn btn-ghost btn-sm">
                   Workspace
                 </Link>
+                <Link href={`/employees/${e.id}/development`} className="btn btn-ghost btn-sm">Development</Link>
               </div>
             </Card>
           ))}

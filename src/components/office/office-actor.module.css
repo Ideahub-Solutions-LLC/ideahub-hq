@@ -1,0 +1,40 @@
+.actor, .desk { display: block; flex: none; overflow: visible; pointer-events: none; }
+.direction { transform-origin: 64px 80px; }
+.actor[data-facing="left"] .direction { transform: scaleX(-1); }
+.leftLeg { transform-origin: 55px 98px; }
+.rightLeg { transform-origin: 73px 98px; }
+.leftLeg .thigh { transform-origin: 55px 98px; }
+.rightLeg .thigh { transform-origin: 73px 98px; }
+.leftArm { transform-origin: 44px 75px; }
+.rightArm { transform-origin: 84px 75px; }
+.actor[data-posture="sitting"] .postureBody { transform: translateY(12px); }
+.actor[data-posture="sitting"] .thigh { transform: translateY(12px) scaleY(0.72) rotate(-48deg); }
+.actor[data-posture="sitting"] .shin { transform: translate(13px, 0); }
+.actor[data-posture="sitting"] .leftArm { transform: rotate(-44deg); }
+.actor[data-posture="sitting"] .rightArm { transform: rotate(44deg); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .actor[data-paused="false"] .postureBody,
+  .actor[data-paused="false"] .thigh,
+  .actor[data-paused="false"] .shin,
+  .actor[data-paused="false"] .leftArm,
+  .actor[data-paused="false"] .rightArm { transition: transform 400ms ease-in-out; }
+  .actor[data-paused="false"][data-posture="walking"] .leftLeg { animation: step-left 680ms ease-in-out infinite; }
+  .actor[data-paused="false"][data-posture="walking"] .rightLeg { animation: step-right 680ms ease-in-out infinite; }
+  .actor[data-paused="false"][data-posture="walking"] .leftArm { animation: swing-left 680ms ease-in-out infinite; }
+  .actor[data-paused="false"][data-posture="walking"] .rightArm { animation: swing-right 680ms ease-in-out infinite; }
+  .actor[data-paused="false"][data-posture="walking"] .bob { animation: walk-bob 340ms ease-in-out infinite; }
+  .actor[data-paused="false"][data-posture="sitting"][data-motion="typing"] .leftArm { animation: seated-type-left 900ms ease-in-out infinite; }
+  .actor[data-paused="false"][data-posture="sitting"][data-motion="typing"] .rightArm { animation: seated-type-right 900ms ease-in-out infinite; }
+  .actor[data-paused="false"][data-posture="sitting"][data-motion="reviewing"] .bob { animation: review 4s ease-in-out infinite; }
+  .actor[data-paused="false"][data-posture="standing"][data-motion="waiting"] .bob { animation: rest 4s ease-in-out infinite; }
+}
+@keyframes step-left { 0%,100% { transform: rotate(20deg); } 50% { transform: rotate(-20deg); } }
+@keyframes step-right { 0%,100% { transform: rotate(-20deg); } 50% { transform: rotate(20deg); } }
+@keyframes swing-left { 0%,100% { transform: rotate(-22deg); } 50% { transform: rotate(22deg); } }
+@keyframes swing-right { 0%,100% { transform: rotate(22deg); } 50% { transform: rotate(-22deg); } }
+@keyframes walk-bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-1.8px); } }
+@keyframes seated-type-left { 0%,100% { transform: rotate(-44deg); } 50% { transform: rotate(-50deg); } }
+@keyframes seated-type-right { 0%,100% { transform: rotate(50deg); } 50% { transform: rotate(44deg); } }
+@keyframes review { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(2deg); transform-origin: 64px 100px; } }
+@keyframes rest { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-1px); } }

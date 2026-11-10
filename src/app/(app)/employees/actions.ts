@@ -130,6 +130,7 @@ export async function runWorkflowAction(employeeId: string, fd: FormData) {
   const ctx = await requirePermission("task.run_workflow");
   const workflowKey = str(fd, "workflowKey") as WorkflowKey;
   if (!(workflowKey in WORKFLOWS)) flashRedirect(`/employees/${employeeId}/workspace`, { error: "Unknown workflow." });
+  if (workflowKey === "content_draft") flashRedirect(`/employees/${employeeId}/content/new`, {});
   let taskId: string;
   try {
     const input: Record<string, unknown> = workflowKey === "meeting_actions" ? { sourceId: str(fd, "sourceId"), useModel: bool(fd, "useModel") } : { periodStart: new Date(str(fd, "periodStart") || Date.now() - 7 * 86400_000).toISOString(), periodEnd: new Date(str(fd, "periodEnd") || Date.now()).toISOString() };

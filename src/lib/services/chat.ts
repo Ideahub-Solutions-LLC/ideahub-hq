@@ -1,6 +1,6 @@
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import type { Db } from "@/db/client";
-import { employeeSkills, employees, memoryProposals, messages, skillVersions, skills, workspaces } from "@/db/schema";
+import { employees, memoryProposals, messages, workspaces } from "@/db/schema";
 import { newId, nowIso } from "@/lib/ids";
 import { resolveProvider, type ChatMessage } from "@/lib/providers";
 import { approvedMemories, approvedSourcesForEmployee, retrieveSnippets } from "./retrieval";
@@ -8,6 +8,7 @@ import { buildEmployeeSystemPrompt } from "./prompt";
 import { checkBudgets, monthToDate, recordUsage } from "./usage";
 import { enqueueJob } from "@/lib/jobs/queue";
 import { recordAudit } from "@/lib/audit";
+import { listApprovedEmployeeSkills } from "./employee-development";
 
 /** Persists a user message and queues the employee's reply as a durable job. */
 export function postUserMessage(db: Db, input: { workspaceId: string; employeeId: string; userId: string; content: string; taskId?: string | null }) {
@@ -35,16 +36,7 @@ export async function generateEmployeeReply(db: Db, input: { workspaceId: string
   if (alreadyReplied) return; // idempotent: a retried job never double-posts
 
   const history = db.select().from(messages).where(eq(messages.employeeId, employee.id)).orderBy(desc(messages.createdAt)).limit(12).all().reverse();
-  const skillRows = db
-    .select({ skill: skills })
-    .from(employeeSkills)
-    .innerJoin(skills, eq(skills.id, employeeSkills.skillId))
-    .where(and(eq(employeeSkills.employeeId, employee.id), eq(skills.status, "approved")))
-    .all();
-  const versionRows = skillRows.length
-    ? db.select().from(skillVersions).where(inArray(skillVersions.skillId, skillRows.map((r) => r.skill.id))).all()
-    : [];
-  const skillSummaries = skillRows.map((r) => ({ name: r.skill.name, version: versionRows.find((v) => v.skillId === r.skill.id && v.version === r.skill.currentVersion) ?? null }));
+  const skillSummaries = listApprovedEmployeeSkills(db, input.workspaceId, employee.id).map(({ skill, version }) => ({ name: skill.name, version }));
   const sources = approvedSourcesForEmployee(db, input.workspaceId, employee.id);
   const snippets = retrieveSnippets(sources, userMessage.content, 3);
   const mems = approvedMemories(db, input.workspaceId, employee.id);

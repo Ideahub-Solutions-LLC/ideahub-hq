@@ -1,16 +1,38 @@
+import { ContentDraftView } from "./content-draft-view";
+import type { ContentDraft } from "@/lib/workflows/content-contract";
 import Link from "next/link";
 import type { Artifact } from "@/db/schema";
-import type { DraftActionList } from "@/lib/workflows/meeting-actions";
+import type { DraftActionList, SourcedStatement } from "@/lib/workflows/meeting-actions";
 import type { DraftStatusSummary, SummaryLine } from "@/lib/workflows/weekly-summary";
 import { Badge, AiBadge } from "@/components/ui/badge";
 import { Notice } from "@/components/ui/card";
-import { fmtDate } from "@/lib/format";
+import { fmtDate, fmtDateTime } from "@/lib/format";
+import { parseMeetingSourceEvidence } from "@/lib/services/workflow-evidence";
 
 /** Renders an artifact so a reviewer can understand it without reading any chat. */
 export function ArtifactView({ artifact }: { artifact: Artifact }) {
-  if (artifact.kind === "draft_action_list") return <ActionListView draft={artifact.content as unknown as DraftActionList} />;
+  if (artifact.kind === "content_draft") return <ContentDraftView draft={artifact.content as unknown as ContentDraft} />;
+  if (artifact.kind === "draft_action_list") return <div className="space-y-4"><SourceEvidence evidence={artifact.content.sourceEvidence} /><ActionListView draft={artifact.content as unknown as DraftActionList} /></div>;
   if (artifact.kind === "draft_status_summary") return <StatusSummaryView summary={artifact.content as unknown as DraftStatusSummary} />;
   return <pre className="overflow-x-auto rounded-xl bg-surface-2 p-3 text-xs">{JSON.stringify(artifact.content, null, 2)}</pre>;
+}
+
+function SourceEvidence({ evidence }: { evidence: unknown }) {
+  const snapshot = parseMeetingSourceEvidence(evidence);
+  if (!snapshot) return <Notice tone="amber" title="Earlier draft: source snapshot unavailable">This draft remains readable. Rerun the meeting workflow and review the new draft before proposing any follow-up.</Notice>;
+  return (
+    <details className="rounded-xl border border-line bg-surface-2 p-4">
+      <summary className="cursor-pointer text-sm font-medium text-ink">Captured source evidence · version {snapshot.sourceVersion}</summary>
+      <dl className="mt-3 grid gap-2 text-xs sm:grid-cols-2">
+        <div><dt className="text-ink-3">Source reference</dt><dd className="break-words">{snapshot.sourceRef || "Not provided"}</dd></div>
+        <div><dt className="text-ink-3">Captured at</dt><dd>{fmtDateTime(snapshot.capturedAt)}</dd></div>
+        <div><dt className="text-ink-3">Employee configuration</dt><dd>Version {snapshot.employee.configVersion}</dd></div>
+        <div><dt className="text-ink-3">Source SHA-256</dt><dd className="break-all font-mono">{snapshot.sourceContentHash}</dd></div>
+      </dl>
+      <p className="my-3 text-xs text-ink-3">Original text captured for this draft. The current source may have changed. Approval and access are rechecked before follow-up.</p>
+      <pre className="max-h-72 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-surface p-3 text-xs text-ink-2">{snapshot.sourceContent}</pre>
+    </details>
+  );
 }
 
 export function ArtifactStatusBadge({ status }: { status: Artifact["status"] }) {
@@ -46,7 +68,9 @@ function ActionListView({ draft }: { draft: DraftActionList }) {
                 <td className="text-ink-3">{i + 1}</td>
                 <td>
                   <div className="font-medium text-ink">{it.title}</div>
-                  {it.flags.includes("excerpt_not_in_source") && <div className="text-xs text-rose">Excerpt not found in source — verify.</div>}
+                  {it.flags.includes("excerpt_not_in_source") && <div className="text-xs text-rose">Excerpt not found in source. Verify before relying on it.</div>}
+                  {it.flags.includes("excerpt_ambiguous") && <div className="text-xs text-rose">Source line is ambiguous. Check the original record.</div>}
+                  {it.flags.includes("title_needs_review") && <div className="text-xs text-amber">Action wording needs review against the source.</div>}
                 </td>
                 <td>
                   {it.ownerStatus === "identified" && <Badge tone="emerald">{it.proposedOwner}</Badge>}
@@ -57,9 +81,10 @@ function ActionListView({ draft }: { draft: DraftActionList }) {
                   {it.dueStatus === "stated" && <span className="text-ink">{it.dueText}</span>}
                   {it.dueStatus === "relative" && <span className="text-amber" title="Relative date as written — not converted">“{it.dueText}”</span>}
                   {it.dueStatus === "missing" && <span className="text-ink-3">not stated</span>}
+                  {it.flags.includes("due_not_in_source") && <div className="text-xs text-rose">Suggested date “{it.dueText}” is not supported by this source line.</div>}
                 </td>
                 <td className="max-w-xs text-xs text-ink-2">
-                  <span className="text-ink-3">line {it.sourceLine}:</span> “{it.sourceExcerpt}”
+                  <span className={it.sourceLine > 0 ? "text-ink-3" : "text-rose"}>{it.sourceLine > 0 ? `line ${it.sourceLine}:` : "No supported source line:"}</span> “{it.sourceExcerpt}”
                 </td>
               </tr>
             ))}
@@ -76,14 +101,19 @@ function ActionListView({ draft }: { draft: DraftActionList }) {
   );
 }
 
-function Sourced({ title, items, empty }: { title: string; items: { text: string; sourceLine: number; sourceExcerpt: string }[]; empty: string }) {
+function Sourced({ title, items, empty }: { title: string; items: SourcedStatement[]; empty: string }) {
   return (
     <div className="rounded-xl border border-line p-3">
       <div className="text-xs font-medium uppercase tracking-wider text-ink-3">{title}</div>
       {items.length === 0 ? <p className="mt-1 text-sm text-ink-3">{empty}</p> : (
         <ul className="mt-1.5 space-y-1.5 text-sm">
           {items.map((d, i) => (
-            <li key={i}>{d.text} <span className="text-xs text-ink-3">(line {d.sourceLine})</span></li>
+            <li key={i} className="space-y-1">
+              <div>{d.text} <span className="text-xs text-ink-3">{d.sourceLine > 0 ? `(line ${d.sourceLine})` : "(no supported source line)"}</span></div>
+              {d.groundingStatus === "needs_review" && <Badge tone="amber">Wording needs review</Badge>}
+              {d.groundingStatus === "source_text_match" && <span className="block text-xs text-ink-3">Literal source wording matched. Meaning still needs human review.</span>}
+              <p className="text-xs text-ink-2">Source excerpt: “{d.sourceExcerpt}”</p>
+            </li>
           ))}
         </ul>
       )}

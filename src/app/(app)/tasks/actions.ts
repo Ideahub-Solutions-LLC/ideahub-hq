@@ -1,4 +1,5 @@
 "use server";
+import { reviseContentTask } from "@/lib/services/content";
 
 import { requirePermission, requireWorkspace } from "@/lib/auth/context";
 import { describeError, flashRedirect, optStr, str } from "@/lib/actions-util";
@@ -60,4 +61,11 @@ export async function proposeFollowUpAction(taskId: string, fd: FormData) {
     flashRedirect(`/tasks/${taskId}`, { error: describeError(e) });
   }
   flashRedirect(`/approvals/${approvalId}`, { ok: created ? "Proposal created. Review the exact action below — nothing has been executed." : "An identical proposal already exists; showing it instead of creating a duplicate." });
+}
+
+export async function reviseContentAction(taskId: string, fd: FormData) {
+  const ctx = await requirePermission("task.run_workflow");
+  try { reviseContentTask(ctx.db, { workspaceId: ctx.workspace.id, taskId, userId: ctx.user.id, note: String(fd.get("revisionNote") ?? "") }); }
+  catch (error) { flashRedirect(`/tasks/${taskId}`, { error: describeError(error) }); }
+  flashRedirect(`/tasks/${taskId}`, { ok: "Revision queued. A new draft version will require a new review." });
 }

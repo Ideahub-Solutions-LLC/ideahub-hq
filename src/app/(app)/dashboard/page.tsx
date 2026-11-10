@@ -9,6 +9,8 @@ import { monthToDate, fmtCents } from "@/lib/services/usage";
 import { listProviders } from "@/lib/providers";
 import { queueStats } from "@/lib/jobs/queue";
 import { timeAgo, fmtTokens, ACTION_TYPE_LABEL } from "@/lib/format";
+import { getDashboardCounts, getPilotReadiness } from "@/lib/services/pilot-readiness";
+import { PilotReadiness } from "@/components/pilot-readiness";
 
 export const dynamic = "force-dynamic";
 
@@ -25,17 +27,18 @@ export default async function DashboardPage() {
   const providers = listProviders();
   const liveProvider = providers.find((p) => p.configured && p.key !== "demo");
   const jobs = queueStats(db, wsId);
-  const completedCount = db.select().from(tasks).where(and(eq(tasks.workspaceId, wsId), eq(tasks.status, "completed"))).all().length;
+  const counts = getDashboardCounts(db, wsId);
+  const pilot = getPilotReadiness(db, wsId);
 
   return (
     <div className="anim-rise">
       <PageHeader eyebrow={workspace.name} title={`Good day, ${user.name.split(" ")[0]}`} description="Who is working on what, what needs your decision, and what is blocked — across humans and AI employees." />
 
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-5">
-        <Stat label="Active work" value={active.length} hint="queued + working" href="/tasks" tone="accent" />
-        <Stat label="Needs approval" value={pending.length} hint="waiting on a human" href="/approvals" tone={pending.length ? "amber" : undefined} />
-        <Stat label="Blocked" value={blocked.length} hint="needs a decision or input" href="/tasks?status=blocked" tone={blocked.length ? "rose" : undefined} />
-        <Stat label="Completed" value={completedCount} hint="all time" href="/tasks?status=completed" tone="emerald" />
+        <Stat label="Active work" value={counts.active} hint="queued + working" href="/tasks" tone="accent" />
+        <Stat label="Needs approval" value={counts.pending} hint="waiting on a human" href="/approvals" tone={pending.length ? "amber" : undefined} />
+        <Stat label="Blocked" value={counts.blocked} hint="needs a decision or input" href="/tasks?status=blocked" tone={blocked.length ? "rose" : undefined} />
+        <Stat label="Completed" value={counts.completed} hint="all time" href="/tasks?status=completed" tone="emerald" />
         <Stat label="AI employees" value={`${activeStaff.length} / ${staff.length}`} hint="active / total" href="/employees" />
       </div>
 
@@ -46,6 +49,8 @@ export default async function DashboardPage() {
           </Notice>
         </div>
       )}
+
+      <PilotReadiness pilot={pilot} />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
@@ -136,7 +141,7 @@ export default async function DashboardPage() {
 
         <div className="space-y-6">
           <Card>
-            <CardTitle description="Drafts produced by AI employees. Every one is reviewed by a human.">Recent outputs</CardTitle>
+            <CardTitle description="Drafts produced by AI employees. Check each review status before relying on it.">Recent outputs</CardTitle>
             {outputs.length === 0 ? (
               <EmptyState title="No outputs yet" />
             ) : (

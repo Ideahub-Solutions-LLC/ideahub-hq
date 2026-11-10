@@ -17,7 +17,7 @@ export async function decideApprovalAction(approvalId: string, decision: Decisio
       if ((process.env.JOB_WORKER_MODE ?? "inline") === "inline") await drainJobs(ctx.db, { limit: 3, workspaceId: ctx.workspace.id, workerId: `inline-${ctx.user.id}` });
       message = "Approved and executed through the connector. Check the receipt below — demo connectors record a simulated result.";
     } else if (decision === "approve") {
-      message = "Draft marked as reviewed. This does not send or create anything; propose a follow-up action from the task page if needed.";
+      message = "Draft marked as reviewed. Nothing was published, sent or created externally.";
     } else if (decision === "reject") {
       message = "Rejected. The task is blocked until a human decides how to proceed.";
     } else {

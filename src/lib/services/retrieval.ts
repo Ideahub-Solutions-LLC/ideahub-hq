@@ -7,7 +7,7 @@ import { employeeKnowledge, knowledgeSources, memories, type KnowledgeSource } f
  * linked to the employee are ever considered. This is a lightweight keyword scorer; the index
  * can later be replaced by a vector store without changing callers (treat the index as rebuildable).
  */
-export type Snippet = { sourceId: string; title: string; excerpt: string; score: number; sourceRef: string | null };
+export type Snippet = { sourceId: string; title: string; excerpt: string; score: number; sourceRef: string | null; version: number; lastVerifiedAt: string | null; paragraph: number; truncated: boolean };
 
 export function approvedSourcesForEmployee(db: Db, workspaceId: string, employeeId: string): KnowledgeSource[] {
   const links = db.select({ id: employeeKnowledge.knowledgeSourceId }).from(employeeKnowledge).where(and(eq(employeeKnowledge.employeeId, employeeId), eq(employeeKnowledge.workspaceId, workspaceId))).all();
@@ -35,15 +35,15 @@ export function retrieveSnippets(sources: KnowledgeSource[], query: string, limi
   const results: Snippet[] = [];
   for (const src of sources) {
     const paragraphs = src.content.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
-    let best: { score: number; text: string } | null = null;
-    for (const p of paragraphs) {
+    let best: { score: number; text: string; paragraph: number } | null = null;
+    for (const [index, p] of paragraphs.entries()) {
       const lower = p.toLowerCase();
       let score = 0;
       for (const t of terms) if (lower.includes(t)) score += 1;
       if (src.title.toLowerCase().split(/\s+/).some((w) => terms.includes(w))) score += 0.5;
-      if (score > 0 && (!best || score > best.score)) best = { score, text: p };
+      if (score > 0 && (!best || score > best.score)) best = { score, text: p, paragraph: index + 1 };
     }
-    if (best) results.push({ sourceId: src.id, title: src.title, excerpt: best.text.length > 400 ? `${best.text.slice(0, 399)}…` : best.text, score: best.score, sourceRef: src.sourceRef });
+    if (best) results.push({ sourceId: src.id, title: src.title, excerpt: best.text.length > 400 ? `${best.text.slice(0, 399)}…` : best.text, score: best.score, sourceRef: src.sourceRef, version: src.version, lastVerifiedAt: src.lastVerifiedAt, paragraph: best.paragraph, truncated: best.text.length > 400 });
   }
   return results.sort((a, b) => b.score - a.score).slice(0, limit);
 }

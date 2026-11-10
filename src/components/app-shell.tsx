@@ -111,7 +111,7 @@ export function AppShell({
             <span className="font-medium">Emergency stop is active.</span>
             <span className="opacity-90">{emergencyStop.reason ?? "All AI employee work and action execution is paused."}</span>
             {isAdmin && (
-              <Link href="/admin/controls" className="ml-auto underline">
+              <Link href="/admin" className="ml-auto underline">
                 Manage
               </Link>
             )}

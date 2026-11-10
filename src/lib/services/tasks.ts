@@ -7,6 +7,8 @@ import { NotFoundError } from "@/lib/authz";
 import { enqueueJob } from "@/lib/jobs/queue";
 import { WORKFLOWS, type WorkflowKey } from "@/lib/workflows/runner";
 import { proposeAction } from "./approvals";
+import { assertMeetingSourceEvidenceCurrent } from "./workflow-evidence";
+import { startContentTask } from "./content";
 import { summaryToMarkdown, type DraftStatusSummary } from "@/lib/workflows/weekly-summary";
 import type { DraftActionList } from "@/lib/workflows/meeting-actions";
 
@@ -60,6 +62,7 @@ export function createTask(db: Db, input: { workspaceId: string; title: string; 
 
 /** Creates a workflow-backed task and queues it for the worker. */
 export function startWorkflowTask(db: Db, input: { workspaceId: string; employeeId: string; workflowKey: WorkflowKey; input: Record<string, unknown>; requestedByUserId: string; ownerUserId?: string | null; title?: string }): Task {
+  if (input.workflowKey === "content_draft") return startContentTask(db, { ...input });
   const employee = db.select().from(employees).where(and(eq(employees.id, input.employeeId), eq(employees.workspaceId, input.workspaceId))).get();
   if (!employee) throw new NotFoundError("Employee not found.");
   const wf = WORKFLOWS[input.workflowKey];
@@ -95,6 +98,7 @@ export function startWorkflowTask(db: Db, input: { workspaceId: string; employee
 export function setTaskStatus(db: Db, input: { workspaceId: string; taskId: string; status: TaskStatus; userId: string; reason?: string }) {
   const task = db.select().from(tasks).where(and(eq(tasks.id, input.taskId), eq(tasks.workspaceId, input.workspaceId))).get();
   if (!task) throw new NotFoundError("Task not found.");
+  if (task.workflowKey === "content_draft" && (input.status === "completed" || input.status === "queued")) throw new Error("Content drafts complete through human review. Use Generate revision to restart blocked work.");
   const now = nowIso();
   db.update(tasks)
     .set({
@@ -122,9 +126,15 @@ export function addTaskComment(db: Db, input: { workspaceId: string; taskId: str
 export function proposeFollowUp(db: Db, input: { workspaceId: string; taskId: string; artifactId: string; userId: string; kind: "create_external_tasks" | "send_message"; connectorKey: string; destination: string }) {
   const task = db.select().from(tasks).where(and(eq(tasks.id, input.taskId), eq(tasks.workspaceId, input.workspaceId))).get();
   if (!task || !task.employeeId) throw new NotFoundError("Task or employee not found.");
-  const artifact = db.select().from(artifacts).where(and(eq(artifacts.id, input.artifactId), eq(artifacts.taskId, task.id))).get();
+  const artifact = db.select().from(artifacts).where(and(eq(artifacts.workspaceId, input.workspaceId), eq(artifacts.id, input.artifactId), eq(artifacts.taskId, task.id))).get();
   if (!artifact) throw new NotFoundError("Artifact not found.");
+  if (artifact.kind === "content_draft") throw new Error("Content delivery is not enabled in this slice. Teams is the next integration.");
   if (artifact.status !== "reviewed") throw new Error("The draft must be reviewed by a human before an external action can be proposed from it.");
+
+  if (artifact.kind === "draft_action_list") {
+    assertMeetingSourceEvidenceCurrent(db, { workspaceId: input.workspaceId, employeeId: task.employeeId, sourceId: artifact.content.sourceId, evidence: artifact.content.sourceEvidence });
+  }
+  if (input.kind === "create_external_tasks" && artifact.kind !== "draft_action_list") throw new Error("Only a reviewed action list can be used to propose external tasks.");
 
   let payload: Record<string, unknown>;
   let title: string;
@@ -134,7 +144,10 @@ export function proposeFollowUp(db: Db, input: { workspaceId: string; taskId: st
     payload = { items, sourceArtifactId: artifact.id, sourceArtifactVersion: artifact.version };
     title = `Create ${items.length} task(s) in ${input.destination}`;
   } else {
-    const text = artifact.kind === "draft_status_summary" ? summaryToMarkdown(artifact.content as unknown as DraftStatusSummary) : JSON.stringify(artifact.content, null, 2);
+    // Preserve the original draft message; internal provenance is not a request to send the full record.
+    const messageContent = { ...artifact.content };
+    delete messageContent.sourceEvidence;
+    const text = artifact.kind === "draft_status_summary" ? summaryToMarkdown(artifact.content as unknown as DraftStatusSummary) : JSON.stringify(messageContent, null, 2);
     payload = { to: input.destination, text, sourceArtifactId: artifact.id, sourceArtifactVersion: artifact.version };
     title = `Post "${artifact.title}" to ${input.destination}`;
   }

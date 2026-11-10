@@ -20,6 +20,8 @@ import { recordAudit } from "@/lib/audit";
 import { assertCan, AuthorizationError, NotFoundError } from "@/lib/authz";
 import { effectiveConnectorMode, getConnectorAdapter } from "@/lib/connectors";
 import { recordUsage } from "./usage";
+import { assertContentReview } from "./content";
+import { assertMeetingSourceEvidenceCurrent } from "./workflow-evidence";
 
 /**
  * Approval engine.
@@ -81,6 +83,10 @@ export function proposeAction(db: Db, input: ProposeInput): { approval: Approval
     }
   }
 
+  if (input.artifactId && input.actionType !== "review_draft") {
+    const bound = db.select().from(artifacts).where(and(eq(artifacts.id, input.artifactId), eq(artifacts.workspaceId, input.workspaceId))).get();
+    if (bound?.kind === "content_draft") throw new ApprovalError("Content delivery is not enabled yet.");
+  }
   const payloadHash = hashPayload(input.payload);
   const idempotencyKey = sha256(`${input.workspaceId}|${input.taskId ?? "no-task"}|${input.actionType}|${input.destination}|${payloadHash}`);
   const existing = db.select().from(approvals).where(eq(approvals.idempotencyKey, idempotencyKey)).get();
@@ -124,7 +130,11 @@ export function proposeAction(db: Db, input: ProposeInput): { approval: Approval
 
 export type Decision = "approve" | "reject" | "changes_requested";
 
-export function decideApproval(db: Db, input: { workspaceId: string; approvalId: string; userId: string; role: WorkspaceRole; decision: Decision; note?: string }): Approval {
+export function decideApproval(db: Db, input: Parameters<typeof decideApprovalInternal>[1]): Approval {
+  return db.transaction((tx) => decideApprovalInternal(tx, input), { behavior: "immediate" });
+}
+
+function decideApprovalInternal(db: Db, input: { workspaceId: string; approvalId: string; userId: string; role: WorkspaceRole; decision: Decision; note?: string }): Approval {
   assertCan(input.role, "approval.decide");
   const approval = db.select().from(approvals).where(and(eq(approvals.id, input.approvalId), eq(approvals.workspaceId, input.workspaceId))).get();
   if (!approval) throw new NotFoundError("Approval not found.");
@@ -140,6 +150,7 @@ export function decideApproval(db: Db, input: { workspaceId: string; approvalId:
     throw new ApprovalError("Payload hash mismatch — the proposed action changed after it was requested. A new approval is required.");
   }
 
+  assertContentReview(db, approval, input.userId, input.decision === "approve");
   const now = nowIso();
   const status = input.decision === "approve" ? "approved" : input.decision === "reject" ? "rejected" : "changes_requested";
   db.update(approvals).set({ status, decidedByUserId: input.userId, decidedAt: now, decisionNote: input.note ?? null }).where(eq(approvals.id, approval.id)).run();
@@ -158,7 +169,7 @@ export function decideApproval(db: Db, input: { workspaceId: string; approvalId:
       let nextAction: string | null = task.nextAction;
       if (input.decision === "approve" && approval.actionType === "review_draft") {
         nextStatus = "completed";
-        nextAction = "Draft reviewed. Propose follow-up actions from the task page if needed.";
+        nextAction = task.workflowKey === "content_draft" ? "Content draft reviewed. Nothing was published or sent." : "Draft reviewed. Propose follow-up actions from the task page if needed.";
       } else if (input.decision === "approve") {
         nextStatus = "working";
         nextAction = "Approved — executing via connector.";
@@ -191,6 +202,30 @@ export type ExecutionOutcome = {
   receipt: typeof actionReceipts.$inferSelect | null;
   skipped: string | null;
 };
+
+/** Check only before a new connector call, never before receipt lookup/reconciliation. */
+function assertFollowUpEvidence(db: Db, approval: Approval) {
+  if (!approval.artifactId) {
+    if (approval.payload.sourceArtifactId) throw new ApprovalError("The follow-up no longer has its bound artifact. Create a new proposal from a reviewed draft.");
+    return;
+  }
+  const artifact = db.select().from(artifacts).where(and(eq(artifacts.id, approval.artifactId), eq(artifacts.workspaceId, approval.workspaceId))).get();
+  const task = approval.taskId ? db.select().from(tasks).where(and(eq(tasks.id, approval.taskId), eq(tasks.workspaceId, approval.workspaceId))).get() : null;
+  if (!artifact || !task || !approval.employeeId || artifact.employeeId !== approval.employeeId || task.employeeId !== approval.employeeId || artifact.taskId !== task.id) {
+    throw new ApprovalError("The follow-up artifact, task or employee no longer matches this approval. Create a new proposal from a reviewed draft.");
+  }
+  if (artifact.status !== "reviewed" || approval.payload.sourceArtifactId !== artifact.id || approval.payload.sourceArtifactVersion !== artifact.version) {
+    throw new ApprovalError("The follow-up draft is no longer reviewed or its version changed. Review the current draft and create a new proposal.");
+  }
+  if (artifact.kind === "draft_action_list" || task.workflowKey === "meeting_actions") {
+    if (artifact.kind !== "draft_action_list") throw new ApprovalError("The meeting draft type changed. Rerun the meeting workflow and review a new draft.");
+    try {
+      assertMeetingSourceEvidenceCurrent(db, { workspaceId: approval.workspaceId, employeeId: approval.employeeId, sourceId: artifact.content.sourceId, evidence: artifact.content.sourceEvidence });
+    } catch (err) {
+      throw new ApprovalError((err as Error).message);
+    }
+  }
+}
 
 /**
  * Executes an approved action exactly once. Safe to call repeatedly: a second call returns
@@ -251,7 +286,11 @@ export async function executeApproval(db: Db, input: { workspaceId: string; appr
       }
       // not_found → safe to retry below using the same receipt row
     }
-  } else {
+  }
+  // A changed source cannot authorize a fresh call or retry. Completed/unknown
+  // receipt reconciliation above remains available even when evidence is stale.
+  assertFollowUpEvidence(db, approval);
+  if (!receipt) {
     receipt = {
       id: newId("rcp"),
       workspaceId: input.workspaceId,

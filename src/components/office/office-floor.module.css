@@ -1,0 +1,23 @@
+.floor { background:var(--canvas); }
+.routineBar { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:12px; padding:16px 24px; border-bottom:1px solid var(--line); }
+.routineTitle { display:flex; align-items:center; gap:8px; color:var(--ink); font-size:13px; font-weight:650; }
+.routineDot { width:6px; height:6px; background:var(--amber); border-radius:50%; }
+.routineHint { color:var(--ink-2); font-size:11px; margin-top:4px; }
+.motionNotice { color:var(--ink-2); background:var(--surface-2); padding:10px 24px; font-size:12px; }
+.viewport { overflow:auto; max-width:100%; padding:16px; scrollbar-gutter:stable; }
+.viewport:focus-visible { outline:2px solid var(--ring); outline-offset:-3px; }
+.canvas { position:relative; width:100%; min-width:900px; isolation:isolate; }
+.plan { position:absolute; inset:0; width:100%; height:100%; }
+.roomLabel { position:absolute; z-index:2; color:var(--ink); font-weight:650; font-size:13px; }
+.roomLabel p { font-size:9px; color:var(--ink-3); font-weight:500; margin-top:2px; }
+.desk { position:absolute; transform:translate(-50%,-92.4242%); pointer-events:none; }
+.desk svg { width:100%; height:auto; }
+.actor { position:absolute; transform:translate(-50%,-96.25%); padding:0; border:0; border-radius:12px; background:transparent; cursor:pointer; outline-offset:3px; }
+.actor > svg { width:100%; height:auto; }
+.actor:focus-visible { outline:3px solid var(--ring); }
+.actor[aria-pressed="true"] { outline:2px solid var(--accent); }
+.nameplate { position:absolute; top:100%; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:4px; white-space:nowrap; padding:2px 5px; background:var(--surface); border:1px solid var(--line-strong); border-radius:5px; color:var(--ink); font-size:10px; font-weight:650; box-shadow:var(--shadow-sm); }
+.nameplate span { color:var(--ink-3); font-size:6px; }
+.phaseLabel { position:absolute; top:calc(100% + 24px); left:50%; transform:translateX(-50%); width:130px; color:var(--ink-2); font-size:8px; text-align:center; pointer-events:none; }
+.footnote { padding:12px 20px; border-top:1px solid var(--line); color:var(--ink-2); font-size:11px; }
+@media(max-width:640px) { .routineBar { padding:14px 18px; } .viewport { padding:8px; } }

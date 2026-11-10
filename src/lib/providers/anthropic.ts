@@ -32,7 +32,7 @@ export const anthropicAdapter: ProviderAdapter = {
           system,
           messages: req.messages,
         }),
-        signal: controller.signal,
+        signal: req.signal ? AbortSignal.any([controller.signal, req.signal]) : controller.signal,
       });
       if (!res.ok) {
         const body = await res.text().catch(() => "");

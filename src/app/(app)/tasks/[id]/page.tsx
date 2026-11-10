@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TaskLiveRefresh } from "@/components/task-live-refresh";
 import { notFound } from "next/navigation";
 import { and, eq } from "drizzle-orm";
 import { requireWorkspace } from "@/lib/auth/context";
@@ -11,7 +12,7 @@ import { AiBadge, ApprovalStatusBadge, Badge, TaskStatusBadge, ModeBadge } from 
 import { Flash } from "@/components/ui/flash";
 import { SubmitButton } from "@/components/ui/button";
 import { ArtifactStatusBadge, ArtifactView } from "@/components/artifacts/artifact-view";
-import { addCommentAction, proposeFollowUpAction, setTaskStatusAction } from "../actions";
+import { addCommentAction, proposeFollowUpAction, setTaskStatusAction, reviseContentAction } from "../actions";
 import { fmtDateTime, timeAgo, ACTION_TYPE_LABEL } from "@/lib/format";
 import { effectiveConnectorMode } from "@/lib/connectors";
 
@@ -38,6 +39,7 @@ export default async function TaskPage({ params, searchParams }: { params: Promi
         actions={<TaskStatusBadge status={t.status} />}
       />
       <Flash ok={sp.ok} error={sp.error} />
+      {t.workflowKey === "content_draft" && <><TaskLiveRefresh running={t.status === "queued" || t.status === "working"} /><Link href={`/office?employee=${t.employeeId}`} className="mb-4 inline-block text-sm text-accent">Watch this employee in the office</Link></>}
       {t.blockedReason && <div className="mb-4"><Notice tone="rose" title="Blocked">{t.blockedReason}</Notice></div>}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -50,7 +52,7 @@ export default async function TaskPage({ params, searchParams }: { params: Promi
                 { label: "AI employee", value: t.employee ? <Link href={`/employees/${t.employee.id}`} className="inline-flex items-center gap-1.5 hover:underline"><AiAvatar seed={t.employee.avatarSeed} name={t.employee.name} size={20} /> {t.employee.name} <AiBadge /></Link> : "None" },
                 { label: "Department", value: t.department?.name ?? "—" },
                 { label: "Workflow", value: t.workflowKey ? <code className="kbd">{t.workflowKey}</code> : "Manual" },
-                { label: "Progress", value: `${t.progressPct}%` },
+                { label: t.workflowKey === "content_draft" ? "Stage" : "Progress", value: t.workflowKey === "content_draft" ? t.nextAction ?? "Queued" : `${t.progressPct}%` },
                 { label: "Next action", value: t.nextAction ?? "—" },
                 { label: "Created", value: fmtDateTime(t.createdAt) },
                 { label: "Updated", value: `${fmtDateTime(t.updatedAt)} (${timeAgo(t.updatedAt)})` },
@@ -82,7 +84,7 @@ export default async function TaskPage({ params, searchParams }: { params: Promi
             </Card>
           )}
 
-          {latestArtifact && latestArtifact.status === "reviewed" && t.employee && t.employee.status === "active" && can(role, "task.run_workflow") && (
+          {latestArtifact && latestArtifact.kind !== "content_draft" && latestArtifact.status === "reviewed" && t.employee && t.employee.status === "active" && can(role, "task.run_workflow") && (
             <Card>
               <CardTitle description="A reviewed draft is not an authorization to send. Each of these creates a new, exact proposal for a manager to approve.">Propose a follow-up action</CardTitle>
               {usableConnectors.length === 0 ? (
@@ -115,6 +117,7 @@ export default async function TaskPage({ params, searchParams }: { params: Promi
             </Card>
           )}
 
+          {t.workflowKey === "content_draft" && (t.status === "blocked" || t.status === "paused") && <Card><CardTitle>Generate a revised draft</CardTitle><form action={reviseContentAction.bind(null, t.id)} className="space-y-3"><label className="label" htmlFor="revisionNote">Changes or resolved blocker</label><textarea id="revisionNote" name="revisionNote" className="textarea" required maxLength={2000} /><SubmitButton>Generate revision</SubmitButton></form></Card>}
           <Card>
             <CardTitle description="Every status change, checkpoint, artifact, approval and receipt — newest first.">Activity history</CardTitle>
             <ol className="space-y-3">
@@ -177,8 +180,8 @@ export default async function TaskPage({ params, searchParams }: { params: Promi
               <CardTitle>Controls</CardTitle>
               <div className="flex flex-wrap gap-2">
                 {t.status !== "paused" && t.status !== "completed" && <form action={setTaskStatusAction.bind(null, t.id, "paused")}><SubmitButton size="sm" variant="secondary">Pause</SubmitButton></form>}
-                {(t.status === "paused" || t.status === "blocked" || t.status === "failed") && <form action={setTaskStatusAction.bind(null, t.id, "queued")}><SubmitButton size="sm" variant="secondary">{t.workflowKey ? "Re-queue (re-run)" : "Re-open"}</SubmitButton></form>}
-                {t.status !== "completed" && <form action={setTaskStatusAction.bind(null, t.id, "completed")}><SubmitButton size="sm" variant="success">Mark completed</SubmitButton></form>}
+                {t.workflowKey !== "content_draft" && (t.status === "paused" || t.status === "blocked" || t.status === "failed") && <form action={setTaskStatusAction.bind(null, t.id, "queued")}><SubmitButton size="sm" variant="secondary">{t.workflowKey ? "Re-queue (re-run)" : "Re-open"}</SubmitButton></form>}
+                {t.workflowKey !== "content_draft" && t.status !== "completed" && <form action={setTaskStatusAction.bind(null, t.id, "completed")}><SubmitButton size="sm" variant="success">Mark completed</SubmitButton></form>}
                 {t.status !== "blocked" && t.status !== "completed" && (
                   <form action={setTaskStatusAction.bind(null, t.id, "blocked")} className="flex w-full gap-2">
                     <input name="reason" className="input" placeholder="Reason for blocking" />

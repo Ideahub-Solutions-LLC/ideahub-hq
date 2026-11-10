@@ -1,9 +1,12 @@
+import { loadEnvConfig } from "@next/env";
 /**
  * Standalone job worker: `pnpm worker`. Use when JOB_WORKER_MODE=external so background
  * work runs outside the web process (recommended for production).
  */
 import { createDb, runMigrations } from "../src/db/client";
 import { startWorker } from "../src/lib/jobs/worker";
+
+loadEnvConfig(process.cwd());
 
 const db = createDb();
 runMigrations(db);

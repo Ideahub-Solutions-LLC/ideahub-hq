@@ -39,7 +39,7 @@ Every business table carries `workspace_id`. Secrets are never stored in any tab
 | `tasks` | Objective, status (queued/working/needs_approval/blocked/completed/paused/failed), priority, accountable human owner, requester, optional AI employee, `workflow_key` + `input`, progress, next action, blocked reason. |
 | `task_steps` | Durable checkpoints per step (name, status, checkpoint JSON, timestamps). A task can resume without the model conversation. |
 | `task_events` | Activity history: status changes, checkpoints, artifacts, approvals, receipts, errors, internal comments. |
-| `artifacts` | Outputs: `draft_action_list`, `draft_status_summary`, `note`, `message_draft`; status draft/reviewed/rejected/superseded; reviewer + note. |
+| `artifacts` | Outputs: `draft_action_list`, `draft_status_summary`, `content_draft`, `note`, `message_draft`; status draft/reviewed/rejected/superseded; reviewer + note. Content artifacts capture the brief, source snapshots, configuration/skill evidence, copy and claim checks. |
 | `messages` | Employee conversations (user/employee/system) with metadata (provider, model, sources cited, degraded flag). |
 
 ## Control
@@ -60,6 +60,7 @@ Every business table carries `workspace_id`. Secrets are never stored in any tab
 | `usage_events` | Ledger: employee, task, provider, model, meter (model_tokens/connector_call/storage), units, estimated cost (nullable) + `cost_status` (estimated/unavailable/final), unique `event_key`. |
 | `budgets` | Monthly limits per workspace or employee with alert threshold. |
 | `jobs` | Durable queue: kind (task.run / employee.reply / approval.execute), payload, status, attempts, run_after, lock. |
+| `workflow_runs` | Content execution attempts: workspace/task/employee/job, owning attempt, stage, heartbeat, start/finish/error and reserved cost. Unique per job + attempt. Drives confirmed-live office activity and conservative budget holds. |
 
 ## Migrations
 
@@ -77,3 +78,7 @@ Commit the generated SQL and `drizzle/meta/*`. Never edit applied migrations; ad
 `pnpm db:seed` creates one fictional workspace (`IdeaHub HQ`): 5 fictional users, 6 departments, 7 AI employee profiles (only **Harper** active), 4 skills, 6 knowledge sources (approved / pending / stale examples), 2 memory proposals + 1 approved memory, 6 connectors (Demo / Disconnected / Planned), budgets, 7 human tasks, and then **runs the real pipeline**: a meeting-actions task (reviewed, with a pending follow-up proposal to the demo task system), a weekly-summary task (awaiting review), and one conversation with Harper. All names, clients and meetings are invented.
 
 To change the fictional accounts, edit `src/db/demo-users.ts` and `src/db/seed.ts`, then `pnpm db:reset && pnpm db:setup`.
+
+## Authentication additions (local P0)
+
+`auth_rate_limits` holds hashed global authentication buckets, attempt counts and expiry milliseconds. `password_resets` holds a recovery-code hash, user, authorizing workspace and expiry. These are global authentication support records (users/sessions span workspaces); recovery issuance verifies the workspace and role in the service. Migrations: `0001_auth_recovery.sql` and `0002_recovery_issuer.sql`. Recovery codes also record their issuer so later permission changes are enforced at redemption.

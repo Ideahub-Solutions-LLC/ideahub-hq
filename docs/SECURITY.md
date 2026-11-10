@@ -21,16 +21,16 @@
 
 ## Known limitations (must be addressed before any client workspace)
 
-1. **No rate limiting or brute-force protection** on `/login`. Add a limiter (per IP + per email) and optional 2FA.
+1. **Login throttling is implemented** with persistent per-email and per-address windows; see `docs/LOCAL_PILOT.md` for trusted-proxy configuration. Edge DoS protection and 2FA remain open.
 2. **No CSRF token** beyond Next.js Server Actions' built-in origin checks and `sameSite=lax` cookies. Review before exposing publicly.
 3. **No encryption at rest** for the SQLite file; rely on disk encryption for the pilot. Postgres + managed encryption for production.
-4. **Password reset / invitations / SSO** are not implemented. Admins create members with a one-time temporary password shown once.
+4. **Password recovery is administrator assisted** with hashed, expiring, single-use codes and session revocation. There is no reset email, SSO or invitation delivery. Verify identity before issuing codes; see `docs/LOCAL_PILOT.md`. Admins still create new members with a temporary password.
 5. **Prompt injection** is mitigated (data wrapping, server-side validation, no tool execution from model text) but a model can still produce misleading *draft text*. Human review of every draft remains the control.
 6. **Cross-tenant retrieval** is enforced by `workspace_id` filters in code, not by database row-level security. Add Postgres RLS before multi-tenant use.
 7. **File uploads** are not implemented (knowledge is pasted text). When added: virus scanning, size limits, storage isolation per workspace, and deletion propagation to derived chunks/embeddings.
 8. **Deletion/retention policies** are not implemented. Define retention for messages, artifacts, audit logs and backups before client data is accepted.
 9. **Budget enforcement in cost terms requires a pricing table.** Without `PROVIDER_PRICING_JSON`, caps are only enforced via max output tokens and job limits.
-10. **Demo login hints** are shown on the sign-in page outside production (`SHOW_DEMO_LOGINS=1` forces them on). Remove seeded accounts before any real use.
+10. **Demo login hints** are hidden unless `SHOW_DEMO_LOGINS=1`. Use `pnpm pilot:setup` against a separate empty database for actual users; do not promote seeded accounts into real use.
 11. **The optional `/api/jobs/run` trigger** is disabled unless `JOBS_TRIGGER_TOKEN` is set; rotate the token if used.
 12. **No security headers / CSP** configured yet.
 

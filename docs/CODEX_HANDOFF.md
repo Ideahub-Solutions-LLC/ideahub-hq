@@ -1,5 +1,9 @@
 # Codex handoff — IdeaHub AI Team v0.1 (internal pilot)
 
+> Local continuation on 7 Nov 2026: see [LOCAL_PILOT.md](LOCAL_PILOT.md) and [LOCAL_VERIFICATION.md](LOCAL_VERIFICATION.md). The verification tables below describe the original delivery; current auth controls and remaining staging gates are documented in those files.
+
+> 10 Nov 2026: Juno's content brief → draft → human review workflow and heartbeat-driven office activity are implemented. See [JUNO_CONTENT_WORKFLOW.md](JUNO_CONTENT_WORKFLOW.md) and [JUNO_CONTENT_VERIFICATION.md](JUNO_CONTENT_VERIFICATION.md). Existing employee configuration was preserved; live writing and Teams remain unqualified/unconnected. The current suite passes 183 tests across 17 files.
+
 Prepared 6 Nov 2026 for Emmanuel and the IdeaHub engineering team. Read `README.md` first, then this file, then `docs/ARCHITECTURE.md`.
 
 ## 1. What works (verified)
@@ -76,7 +80,7 @@ Known gaps (no failing tests, but untested areas): live provider adapters, UI co
 
 ## 6. Security and privacy limitations
 
-See `docs/SECURITY.md`. Headline: no rate limiting, no 2FA, no RLS, no encryption at rest, no CSP, no retention policy, demo accounts seeded. Single-tenant pilot only.
+See `docs/SECURITY.md`. Original delivery limitations (auth updated in the local continuation): no rate limiting, no 2FA, no RLS, no encryption at rest, no CSP, no retention policy, demo accounts seeded. Single-tenant pilot only.
 
 ## 7. Prioritized next engineering steps
 

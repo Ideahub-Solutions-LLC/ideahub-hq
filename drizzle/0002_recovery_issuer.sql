@@ -1,0 +1,1 @@
+ALTER TABLE `password_resets` ADD `issued_by_user_id` text REFERENCES users(id);
